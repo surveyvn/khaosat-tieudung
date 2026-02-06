@@ -1,0 +1,67 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f2f2f2;
+}
+
+.container {
+  max-width: 600px;
+  width: 100%;
+  margin: auto;
+  background: #fff;
+  padding: 16px;
+  margin-top: 30px;
+  border-radius: 8px;
+}
+
+h1 {
+  text-align: center;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+label {
+  margin-bottom: 6px;
+}
+
+input, select {
+  padding: 10px;
+  font-size: 16px;
+}
+
+button {
+  padding: 12px;
+  font-size: 16px;
+  width: 100%;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #43a047;
+}
+
+#message {
+  margin-top: 16px;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* 📱 Điện thoại */
+@media (max-width: 600px) {
+  .container {
+    margin-top: 10px;
+    padding: 12px;
+  }
+}
