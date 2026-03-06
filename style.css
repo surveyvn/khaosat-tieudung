@@ -1,67 +1,108 @@
-* {
-  box-sizing: border-box;
+/* Tối ưu biến màu sắc và Font */
+:root {
+    --primary: #2ecc71;
+    --nttu-blue: #004a91;
+    --bg-light: #f4f7f6;
+    --text-dark: #2c3e50;
 }
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Montserrat', sans-serif; }
 
 body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f2f2f2;
+    background: linear-gradient(135deg, #004a91 0%, #3498db 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px; /* Khoảng cách an toàn cho điện thoại */
 }
 
-.container {
-  max-width: 600px;
-  width: 100%;
-  margin: auto;
-  background: #fff;
-  padding: 16px;
-  margin-top: 30px;
-  border-radius: 8px;
+.main-card {
+    background: rgba(255, 255, 255, 0.98);
+    width: 100%;
+    max-width: 800px; /* Độ rộng chuẩn cho màn hình máy tính */
+    border-radius: 25px;
+    padding: 30px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
 }
 
-h1 {
-  text-align: center;
+/* Tối ưu Logo cho mọi màn hình */
+.logo-wrapper { text-align: center; margin-bottom: 20px; }
+.school-logo { 
+    width: 220px; 
+    max-width: 70%; /* Không bao giờ tràn màn hình đt */
+    height: auto; 
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 16px;
+/* Progress Bar */
+.progress-container { height: 8px; background: #eee; border-radius: 10px; margin: 20px 0; overflow: hidden; }
+.progress-bar { height: 100%; background: var(--primary); width: 33%; transition: 0.5s ease; }
+
+/* Câu hỏi Likert: QUAN TRỌNG NHẤT */
+.likert-container {
+    background: #fff;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 10px;
 }
 
-label {
-  margin-bottom: 6px;
+.likert-question {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: var(--text-dark);
 }
 
-input, select {
-  padding: 10px;
-  font-size: 16px;
+.likert-options {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
 }
 
-button {
-  padding: 12px;
-  font-size: 16px;
-  width: 100%;
-  background: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+.option-item { flex: 1; }
+.option-item input { display: none; }
+.option-item label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 45px; /* Độ cao chuẩn để ngón tay dễ chạm trên ĐT */
+    background: #f8f9fa;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.2s;
 }
 
-button:hover {
-  background: #43a047;
+/* Khi người dùng chọn */
+.option-item input:checked + label {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
 }
 
-#message {
-  margin-top: 16px;
-  text-align: center;
-  font-weight: bold;
-}
-
-/* 📱 Điện thoại */
+/* MEDIA QUERIES: Tối ưu riêng cho Điện thoại (dưới 600px) */
 @media (max-width: 600px) {
-  .container {
-    margin-top: 10px;
-    padding: 12px;
-  }
+    .main-card { padding: 15px; border-radius: 15px; }
+    
+    h2 { font-size: 1.2rem; }
+    
+    .likert-options {
+        gap: 5px; /* Giảm khoảng cách nút trên ĐT */
+    }
+    
+    .option-item label {
+        height: 40px;
+        font-size: 0.9rem;
+    }
+    
+    .rating-legend {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* Chia 2 cột trên ĐT cho dễ đọc */
+        gap: 8px;
+    }
+    
+    .button-group {
+        flex-direction: column; /* Nút "Gửi" và "Quay lại" nằm chồng lên nhau trên ĐT */
+    }
 }
