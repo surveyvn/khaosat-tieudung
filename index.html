@@ -10,337 +10,271 @@
     <style>
         :root {
             --primary: #2ecc71;
-            --primary-dark: #27ae60;
             --nttu-blue: #004a91;
             --accent: #e67e22;
             --glass: rgba(255, 255, 255, 0.98);
-            --shadow: 0 20px 50px rgba(0,0,0,0.1);
             --gradient: linear-gradient(135deg, #004a91 0%, #3498db 100%);
         }
 
         * { box-sizing: border-box; font-family: 'Montserrat', sans-serif; }
-
-        body {
-            margin: 0; background: var(--gradient); min-height: 100vh;
-            display: flex; align-items: center; justify-content: center;
-            padding: 20px; overflow-x: hidden;
-        }
+        body { margin: 0; background: var(--gradient); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
 
         .main-card {
-            background: var(--glass); backdrop-filter: blur(15px);
-            width: 100%; max-width: 850px; border-radius: 30px;
-            padding: 40px; box-shadow: var(--shadow); position: relative;
-            animation: fadeIn 0.8s ease;
+            background: var(--glass); width: 100%; max-width: 850px; border-radius: 30px;
+            padding: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.1);
         }
 
-        /* Logo & Header */
-        .logo-wrapper { text-align: center; margin-bottom: 30px; display: flex; flex-direction: column; align-items: center; }
-        .school-logo { width: 250px; height: auto; filter: drop-shadow(0 5px 10px rgba(0,0,0,0.1)); }
-        .logo-wrapper h1 { margin-top: 15px; font-size: 1.3rem; color: var(--nttu-blue); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-
-        /* Progress Bar */
+        .intro-box { background: #f0f7ff; border-left: 5px solid var(--nttu-blue); padding: 20px; border-radius: 10px; margin-bottom: 25px; font-size: 0.95rem; }
         .progress-container { height: 10px; background: #eee; border-radius: 20px; margin-bottom: 35px; overflow: hidden; }
-        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%); width: 33%; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%); width: 25%; transition: 0.8s ease; }
 
-        /* Pages */
         .page { display: none; animation: slideIn 0.5s forwards; }
         .active { display: block; }
-        h2 { color: #2c3e50; font-weight: 800; text-align: center; margin-bottom: 25px; font-size: 1.6rem; }
-        .step-title { font-size: 1rem; color: #7f8c8d; margin-bottom: 20px; font-weight: 600; text-transform: uppercase; text-align: center; }
+        h2 { color: #2c3e50; font-weight: 800; text-align: center; margin-bottom: 25px; }
 
-        /* Form Elements */
-        .question-group { margin-bottom: 20px; }
-        label { font-weight: 600; color: #34495e; margin-bottom: 8px; display: block; font-size: 0.9rem; }
-        input, select, textarea {
-            width: 100%; padding: 14px 20px; border-radius: 12px;
-            border: 2px solid #ecf0f1; background: #f9fbfd; font-size: 1rem; transition: 0.3s;
-        }
-        input:focus, select:focus { border-color: var(--primary); outline: none; background: #fff; box-shadow: 0 0 10px rgba(46, 204, 113, 0.1); }
-
-        /* Chú thích mức độ 1-5 */
-        .rating-legend {
-            display: flex; justify-content: space-around; background: #f0f7ff;
-            padding: 15px; border-radius: 15px; margin-bottom: 25px;
-            border: 1px dashed var(--nttu-blue); flex-wrap: wrap; gap: 10px;
-        }
-        .legend-item { font-size: 0.85rem; color: #444; font-weight: 600; display: flex; align-items: center; gap: 5px; }
-        .legend-item span {
-            background: var(--nttu-blue); color: white; width: 22px; height: 22px;
-            display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.75rem;
+        .question-group { margin-bottom: 30px; }
+        label { font-weight: 600; color: #34495e; margin-bottom: 12px; display: block; font-size: 0.95rem; }
+        
+        input[type="text"], input[type="number"], select, textarea {
+            width: 100%; padding: 14px 20px; border-radius: 12px; border: 2px solid #ecf0f1; background: #f9fbfd; font-size: 1rem;
         }
 
-        /* Likert Box */
-        .likert-container { background: #fff; border-radius: 15px; padding: 20px; margin-bottom: 15px; border: 1px solid #f0f0f0; transition: 0.3s; }
-        .likert-container:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .likert-question { font-weight: 600; color: #2c3e50; margin-bottom: 12px; font-size: 0.95rem; line-height: 1.4; }
-        .likert-options { display: flex; justify-content: space-between; gap: 8px; }
-        .option-item { flex: 1; }
-        .option-item input { display: none; }
-        .option-item label {
-            background: #f8f9fa; border: 2px solid #eee; height: 45px; display: flex;
-            align-items: center; justify-content: center; border-radius: 10px;
-            cursor: pointer; transition: 0.2s; font-weight: 700; color: #7f8c8d;
-        }
-        .option-item input:checked + label { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3); }
+        .note-highlight { background-color: #fff3cd; border-left: 5px solid #ffc107; color: #856404; padding: 12px; border-radius: 8px; font-weight: 800; margin-bottom: 15px; font-size: 0.9rem; }
+        .options-list { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
+        .option-item-custom { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .grid-container { background: #f8f9fa; padding: 15px; border-radius: 15px; }
+        .grid-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .grid-row input { width: 100px !important; padding: 8px !important; text-align: center; }
 
-        /* Buttons */
         .button-group { display: flex; gap: 15px; margin-top: 35px; }
-        button { padding: 16px 30px; border-radius: 15px; border: none; font-weight: 700; cursor: pointer; transition: 0.3s; flex: 1; font-size: 1rem; }
-        .btn-next { background: var(--primary); color: white; flex: 2; }
-        .btn-next:hover { background: var(--primary-dark); transform: translateY(-2px); }
+        button { padding: 16px 30px; border-radius: 15px; border: none; font-weight: 700; cursor: pointer; flex: 1; transition: 0.3s; }
+        .btn-next { background: var(--primary); color: white; }
         .btn-prev { background: #eee; color: #7f8c8d; }
 
-        /* Thank you page */
-        #thank-you { display: none; text-align: center; padding: 30px 0; animation: fadeIn 0.8s ease; }
-        .success-icon { font-size: 5rem; color: var(--primary); margin-bottom: 20px; }
-
+        #thank-you { display: none; text-align: center; padding: 30px 0; }
         @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        @media (max-width: 768px) {
-            .main-card { padding: 25px; border-radius: 20px; }
-            .school-logo { width: 180px; }
-            .rating-legend { display: grid; grid-template-columns: 1fr 1fr; }
-        }
     </style>
 </head>
 <body>
 
 <div class="main-card">
-    <div class="logo-wrapper">
-        <img src="https://upload.wikimedia.org/wikipedia/vi/c/c6/Logo_DH_Nguyen_Tat_Thanh.png" alt="NTTU Logo" class="school-logo" onerror="this.src='https://ntt.edu.vn/vnt_upload/weblink/Logo_NTTU_2.png';">
-        <h1>Đại Học Nguyễn Tất Thành</h1>
-    </div>
-
-    <div class="progress-container">
-        <div class="progress-bar" id="progress"></div>
-    </div>
+    <div class="progress-container"><div class="progress-bar" id="progress"></div></div>
 
     <form id="surveyForm">
         <div class="page active" id="page1">
+            <div class="intro-box"><strong>Khảo sát tiêu dùng hộ gia đình - NTTU</strong><br>Chào anh/chị,
+
+Chúng tôi là nhóm nghiên cứu thuộc Trường Đại học Nguyễn Tất Thành. Chúng tôi đang thực hiện nghiên cứu về mức độ tiêu dùng của hộ gia đình. Kết quả nghiên cứu của đề tài giúp hiểu được mức độ tiêu thụ nguyên vật liệu và năng lượng của hộ gia đình, hướng đến các mục tiêu tiêu dùng bền vững trong tương lai.
+Cảm ơn anh/chị đã dành thời gian tham gia và trả lời đầy đủ các câu hỏi của nhóm nghiên cứu. Chúng tôi cam kết các câu trả lời của anh/chị được ghi nhận chỉ nhằm mục đích duy nhất phục vụ cho nghiên cứu khoa học. 
+
+Trân trọng!</div>
             <h2>Thông tin cá nhân</h2>
-            <div class="step-title">Bước 1: Cơ bản</div>
-            <div class="question-group">
-                <label><i class="fa fa-user"></i> Họ và tên</label>
-                <input type="text" name="fullname" required placeholder="Nhập đầy đủ họ tên...">
-            </div>
-            <div class="question-group">
-                <label><i class="fa fa-graduation-cap"></i> Lớp học phần</label>
-                <input type="text" name="class" required placeholder="Ví dụ: 24DTH1A...">
-            </div>
+            <div class="question-group"><label>Họ và tên</label><input type="text" name="fullname" required></div>
+            <div class="question-group"><label>Lớp học phần</label><input type="text" name="class_info" required></div>
             <div style="display: flex; gap: 15px;">
-                <div class="question-group" style="flex: 1;">
-                    <label>Tuổi</label>
-                    <input type="number" name="age" required min="15">
-                </div>
-                <div class="question-group" style="flex: 1;">
-                    <label>Giới tính</label>
-                    <select name="gender" required>
-                        <option value="">Chọn...</option>
-                        <option>Nam</option>
-                        <option>Nữ</option>
-                        <option>Khác</option>
-                    </select>
-                </div>
+                <div class="question-group" style="flex: 1;"><label>Tuổi</label><input type="number" name="age" required></div>
+                <div class="question-group" style="flex: 1;"><label>Giới tính</label><select name="gender" required><option value="">Chọn...</option><option>Nam</option><option>Nữ</option></select></div>
             </div>
-            <div class="button-group">
-                <button type="button" class="btn-next" onclick="nextPage(2, '66%')">Tiếp tục <i class="fa fa-arrow-right"></i></button>
-            </div>
+            <div class="button-group"><button type="button" class="btn-next" onclick="nextPage(2, '50%')">Tiếp tục <i class="fa fa-arrow-right"></i></button></div>
         </div>
 
         <div class="page" id="page2">
-            <h2>Địa chỉ & Thu nhập</h2>
-            <div class="step-title">Bước 2: Hộ gia đình</div>
-            
-            <div class="question-group">
-                <label>Tỉnh / Thành phố</label>
-                <select id="province" name="province" required>
-                    <option value="">Chọn Tỉnh/Thành phố</option>
-                </select>
-            </div>
-
-            <div class="question-group">
-                <label>Quận / Huyện</label>
-                <select id="district" name="district" required disabled>
-                    <option value="">Chọn Quận/Huyện</option>
-                </select>
-            </div>
-
-            <div class="question-group">
-                <label>Phường / Xã</label>
-                <select id="ward" name="ward" required disabled>
-                    <option value="">Chọn Phường/Xã</option>
-                </select>
-            </div>
-
-            <div class="question-group">
-                <label>Thu nhập hộ gia đình (tháng)</label>
-                <select name="income" required>
-                    <option value="">-- Chọn mức thu nhập --</option>
-                    <option>Dưới 5 triệu</option>
-                    <option>5 - 10 triệu</option>
-                    <option>10 - 15 triệu</option>
-                    <option>15 - 20 triệu</option>
-                    <option>20 - 25 triệu</option>
-                    <option>25 - 30 triệu</option>
-                    <option>30 - 35 triệu</option>
-                    <option>35 - 40 triệu</option>
-                    <option>40 - 45 triệu</option>
-                    <option>45 - 50 triệu</option>
-                    <option>Trên 50 triệu</option>
-                </select>
-            </div>
+            <h2>Nơi cư trú</h2>
+            <div class="question-group"><label>Tỉnh / Thành phố</label><select id="province" name="province" required><option value="">Đang tải...</option></select></div>
+            <div class="question-group"><label>Quận / Huyện</label><select id="district" name="district" required disabled><option value="">Chọn Tỉnh trước...</option></select></div>
+            <div class="question-group"><label>Phường / Xã</label><select id="ward" name="ward" required disabled><option value="">Chọn Huyện trước...</option></select></div>
             <div class="button-group">
-                <button type="button" class="btn-prev" onclick="nextPage(1, '33%')">Quay lại</button>
-                <button type="button" class="btn-next" onclick="nextPage(3, '100%')">Tiếp tục <i class="fa fa-arrow-right"></i></button>
+                <button type="button" class="btn-prev" onclick="nextPage(1, '25%')">Quay lại</button>
+                <button type="button" class="btn-next" onclick="nextPage(3, '75%')">Tiếp tục <i class="fa fa-arrow-right"></i></button>
             </div>
         </div>
 
         <div class="page" id="page3">
-            <h2>Ý kiến khảo sát</h2>
-            <div class="step-title">Bước 3: Tiêu dùng xanh</div>
-            
-            <div class="rating-legend">
-                <div class="legend-item"><span>1</span> Rất ko đồng ý</div>
-                <div class="legend-item"><span>2</span> Ko đồng ý</div>
-                <div class="legend-item"><span>3</span> Bình thường</div>
-                <div class="legend-item"><span>4</span> Đồng ý</div>
-                <div class="legend-item"><span>5</span> Rất đồng ý</div>
-            </div>
-
-            <div id="likert-questions-container"></div>
-            
+            <h2>Nội dung khảo sát</h2>
+            <div id="dynamic-questions"></div>
             <div class="button-group">
-                <button type="button" class="btn-prev" onclick="nextPage(2, '66%')">Quay lại</button>
+                <button type="button" class="btn-prev" onclick="nextPage(2, '50%')">Quay lại</button>
                 <button type="submit" class="btn-next" id="submitBtn">Gửi khảo sát <i class="fa fa-paper-plane"></i></button>
             </div>
         </div>
     </form>
 
     <div id="thank-you">
-        <div class="success-icon"><i class="fas fa-check-circle"></i></div>
-        <h3>HOÀN THÀNH KHẢO SÁT!</h3>
-        <p>Cảm ơn bạn đã đóng góp thông tin cho nghiên cứu của chúng tôi.</p>
-        <button onclick="location.reload()" class="btn-prev" style="margin-top:20px; max-width:200px;">Làm khảo sát mới</button>
+        <i class="fas fa-check-circle" style="font-size: 5rem; color: var(--primary); margin-bottom: 20px;"></i>
+        <h2>CẢM ƠN ANH/CHỊ!</h2>
+        <p>Thông tin của bạn đã được gửi thành công.</p>
     </div>
 </div>
 
 <script>
-    // Link Script sẽ được dán vào đây sau
     const scriptURL = 'https://script.google.com/macros/s/AKfycbwk-owgztg9rdMhvO6Wjr0UCTdKJKl83hiH0LhSinm-aFIDwmpcFW-hZkiQSORcGN9W/exec';
-    const form = document.getElementById('surveyForm');
-
-    // 30 câu hỏi chuyên nghiệp
-    const questions = [
-        "Tôi ưu tiên dùng túi vải thay túi nilon khi đi siêu thị.",
-        "Tôi thường kiểm tra nhãn năng lượng khi mua đồ điện.",
-        "Tôi ưu tiên mua thực phẩm sản xuất tại địa phương.",
-        "Tôi sẵn sàng trả thêm tiền cho bao bì tái chế.",
-        "Tôi luôn tắt đèn khi rời khỏi phòng.",
-        "Tôi sử dụng đồ dùng cho đến khi hỏng mới thay mới.",
-        "Tôi phân loại rác thải tại nguồn thường xuyên.",
-        "Tôi hạn chế sử dụng ống hút nhựa dùng một lần.",
-        "Tôi ủng hộ các sản phẩm có nhãn xanh/sinh thái.",
-        "Tôi thường xuyên sử dụng bình nước cá nhân.",
-        "Tôi quan tâm đến nguồn gốc của sản phẩm khi mua.",
-        "Tôi tin rằng tiêu dùng xanh giúp bảo vệ tương lai.",
-        "Tôi hạn chế lãng phí thực phẩm trong các bữa ăn.",
-        "Tôi chọn mua hàng online từ các shop giảm nhựa.",
-        "Tôi thích sử dụng các thiết bị tiết kiệm nước.",
-        "Tôi luôn đọc kỹ hạn sử dụng và thành phần.",
-        "Tôi chia sẻ thói quen sống xanh với bạn bè.",
-        "Tôi tham gia các hoạt động thu gom pin cũ.",
-        "Tôi dùng giấy tái chế cho các việc ghi chép nháp.",
-        "Tôi ưu tiên đi bộ hoặc xe đạp cho quãng đường ngắn.",
-        "Tôi sử dụng các loại túi tự hủy sinh học.",
-        "Tôi giảm tần suất mua sắm quần áo không cần thiết.",
-        "Tôi không để thiết bị ở chế độ chờ (standby).",
-        "Tôi ủng hộ việc thu phí túi nilon ở siêu thị.",
-        "Tôi lo lắng về biến đổi khí hậu hiện nay.",
-        "Tôi ưu tiên thực phẩm ít bao bì đóng gói.",
-        "Tôi sử dụng pin sạc thay vì pin dùng một lần.",
-        "Tôi tận dụng các thùng carton để làm đồ tái chế.",
-        "Tôi đánh giá cao doanh nghiệp có xử lý nước thải.",
-        "Tôi sẽ duy trì lối sống bền vững lâu dài."
+    
+    const allQuestions = [
+        { id: "q1", text: "Hộ gia đình có bao nhiêu thành viên? Bao nhiêu người lớn, bao nhiêu trẻ nhỏ(Ví dụ: 2 người lớn, 1 trẻ nhỏ trả lời: 2L, 1N)", type: "input" },
+        { id: "q2", text: "Tổng thu nhập trung bình của hộ gia đình mỗi tháng?", type: "select", options: ["Dưới 10 triệu", "10 - 30 triệu", "30 - 50 triệu", "Trên 50 triệu"] },
+        { id: "q3", text: "Chỗ ở này đã được xây cách đây bao lâu ? (năm)", type: "input" },
+        { id: "q4", text: "Chi phí tiền điện trung bình hàng tháng (VNĐ) ?", type: "input" },
+        { id: "q5", text: "Loại phương tiện di chuyển chính của gia đình bạn ?", type: "input" },
+        { id: "q6", text: "Loại hình nhà của hộ gia đình ?", type: "radio-other", options: ["Nhà phố", "Nhà liền kề", "Chung cư", "Ký túc xá", "Phòng trọ"], otherLabel: "Mục khác" },
+        { id: "q7", text: "Diện tích nhà ở của hộ gia đình (m²):", type: "input" },
+        { id: "q8", text: "Trong 5 năm gần đây, hộ gia đình anh/chị có xây mới hoặc cải tạo nhà ở không? Nếu có, chi phí mua gạch, xi măng, cát, sắt, thép để cải tạo là bao nhiêu và diện tích cải tạo là bao nhiêu ?", type: "input" },
+        { id: "q9", text: "Loại năng lượng hộ gia đình sử dụng? (Có thể chọn nhiều phương án)", type: "checkbox-other", options: ["Từ điện lưới quốc gia", "Từ điện áp mái từ năng lượng mặt trời", "Từ điện gió"], otherLabel: "Mục khác" },
+        { id: "q10", text: "Lượng điện tiêu thụ trung bình mỗi tháng hoặc tiền điện phải đóng mỗi tháng: (kWh) hoặc (VNĐ)", type: "input" },
+        { 
+            id: "q11",
+            text: "Số lượng thiết bị điện tử chính có trong hộ gia đình: (Nhập số lượng, ví dụ: 1, 2...)", 
+            type: "grid-input", 
+            items: [
+                { label: "Tivi", code: "a" }, { label: "Máy lạnh", code: "b" }, { label: "Tủ lạnh", code: "c" },
+                { label: "Máy tính bàn", code: "d" }, { label: "Laptop", code: "e" }, { label: "Lò vi sóng", code: "f" },
+                { label: "Máy rửa chén", code: "g" }, { label: "Máy xay sinh tố", code: "h" }, { label: "Nồi chiên không dầu", code: "i" },
+                { label: "Máy lọc không khí", code: "j" }, { label: "Bếp điện", code: "k" }, { label: "Máy giặt", code: "l" }
+            ]
+        },
+        { id: "q12", text: "Tiêu thụ gas trong gia đình hàng tháng: ", type: "radio-other", options:["Không sử dụng", "1 bình gas/tháng", "2 bình gas/tháng"], otherLabel: "Mục khác" },
+        { id: "q13", text: "Hộ gia đình có biện pháp tiết kiệm năng lượng ? Nếu có vui lòng nêu ví dụ", type: "input" },
+        { id: "q14", text: "Lượng nước tiêu thụ hàng tháng hoặc hoá đơn tiền nước hàng tháng ?: (m3) hoặc (VNĐ)", type: "input" },
+        { id: "q15", text: "Nguồn cung cấp nước chính của hộ gia đình ?", type: "checkbox", options: ["Nước máy", "Nước giếng khoan", "Nước mưa"] },
+        { id: "q16", text: "Hộ gia đình có biện pháp tiết kiệm nước nào không ?", type: "checkbox-other", options: ["Sử dụng vòi nước tiết kiệm", "Tái sử dụng nước (nước giặc, nước rửa rau,..)", "Cắt giảm lượng nước dùng trong sinh hoạt", "Sử dụng tắm vòi thay vì tắm bồn"], otherLabel: "Mục khác" },
+        { id: "q17", text: "Hộ gia đình thường xuyên (có thể chọn nhiều phương án)", type: "checkbox-other", options: ["Nấu ăn ở nhà", "Mua đồ ăn sẵn ở ngoài", "Đi ăn ở ngoài"], otherLabel: "Mục khác" },
+        { id: "q18", note: "Nếu có chọn Nấu ăn ở nhà", text: "Hộ gia đình mua thực phẩm chủ yếu từ nguồn nào ?, Tiêu thụ thực phẩm chủ yếu từ nguồn nào? (Có thể chọn nhiều đáp án)", type: "checkbox-other", options: ["Mua ở siêu thị", "Mua ở chợ", "Mua ở cửa hàng tiện lợi", "Đặt online"], otherLabel: "Mục khác" },
+        { 
+            id: "q19", 
+            text: "Chi phí mua thực phẩm và số lần mua trong tuần:",
+            type: "grid-input",
+            items: [
+                { label: "Thịt heo (VNĐ - lần/tuần)", code: "heo" },
+                { label: "Thịt bò (VNĐ - lần/tuần)", code: "bo" },
+                { label: "Thịt gà, vịt (VNĐ - lần/tuần)", code: "ga" },
+                { label: "Sữa (VNĐ - lần/tuần)", code: "sua" },
+                { label: "Cá (VNĐ - lần/tuần)", code: "ca" },
+                { label: "Rau, củ (VNĐ - lần/tuần)", code: "rau" },
+                { label: "Gạo (VNĐ - lần/tuần)", code: "gao" }
+            ]
+        },
+        {id: "q20", text: "Khoảng cách (theo km hoặc phút) đến nơi mua thực phẩm ?", type: "input"},
+        {id: "q21", note: "Nếu có chọn Đặt mua đồ ăn sẵn ở ngoài về", text: "Đồ ăn được đặt mua online trong phạm vi", type: "radio", options: ["1-2km", "2-5km", "5-10km", "hơn 10km"]},
+        {id: "q22", text: "Loại đồ ăn thường đặt online", type: "checkbox-other", options: ["Bữa chính", "Đồ ăn vặt", "Đồ uống"], otherLabel: "Khác"},
+        {id: "q23", text: "Số lần đặt online/tuần", type:"radio", options: ["1-2 lần", "3-4 lần", "5-6 lần", "hơn 6 lần"]},
+        {id: "q24", note: "Nếu có chọn Đi ăn ở ngoài", text: "Số lần đi ăn ở ngoài", type: "radio", options: ["dưới 3 lần/tuần", "3-6 lần/tuần", "6-10 lần/tuần", "hơn 10 lần/tuần"]},
+        {
+            id: "q25", text: "Số lần chọn món khi ăn ngoài (lần/tuần):", type: "grid-input", items: [
+                { label: "Thịt heo", code: "heo"}, { label: "Thịt bò", code: "bo"}, { label: "Thịt gà", code: "ga"},
+                { label: "Cá", code: "ca"}, { label: "Sữa", code: "sua"}, { label: "Rau, củ", code: "rau"}, { label: "Cơm trắng", code: "com"}
+            ]
+        },
+        {id: "q26", text: "Hộ gia đình có bao nhiêu thành viên ăn chay? Nếu có, chế độ ăn chay như thế nào? Số lần ăn chay trong tháng?", type: "input"},
+        {id: "q27", text: "Hộ gia đình có mua thực phẩm hữu cơ hoặc địa phương không? Nếu có, số lần mua trong tuần?", type: "input"},
+        {
+            id: "q28", text: "Trong 5 năm gần đây, số lượng mua sắm mỗi năm của hộ gia đình?", type: "grid-input", items: [
+                {label: "Quần áo (bộ/năm)", code: "quan"}, {label: "Giày, dép (đôi/năm)", code: "giay"},
+                {label: "Đồ điện tử (cái/năm)", code: "dien"}, {label: "Nội thất (cái/năm)", code: "noi"}
+            ]
+        },
+        {id: "q29", text: "Hộ gia đình có mua đồ dùng, thiết bị, nội thất cũ... không? Nếu có vui lòng nêu cụ thể", type: "input"},
+        {id: "q30", text: "Hộ gia đình dành bao nhiêu giờ mỗi tuần cho hoạt động giải trí", type: "radio", options: ["dưới 7h/tuần", "7-14h/tuần", "15-20h/tuần", "hơn 20h/tuần"]},
+        {id: "q31", text: "Các hoạt động giải trí chính của hộ gia đình", type: "checkbox-other", options: ["Xem tivi", "Chơi game trên máy tính", "Xem phim trên máy tính", "Đi xem phim, ca nhạc","Giải trí ngoài trời"], otherLabel: "Khác"},
+        {id: "q32", text: "Hộ gia đình sử dụng phương tiện cá nhân nào?", type: "checkbox-other", options: ["Ô tô", "Xe máy", "Xe buýt", "Xe đạp"], otherLabel: "Mục khác"},
+        {
+            id: "q33", text: "Tổng số km đi lại mỗi tuần của hộ gia đình", type: "grid-input", items: [
+                { label: "Ô tô (km)", code: "o"}, { label: "Xe máy (km)", code: "may"},
+                { label: "Xe buýt (km)", code: "buyt"}, { label: "Xe đạp (km)", code: "dap"}
+            ]
+        },
+        {id: "q34", text: "Lượng hoặc chi phí nhiên liệu tiêu thụ trung bình mỗi tuần:___lít/tuần hoặc___VNĐ/tuần?", type: "input"},
+        {id: "q35", text: "Số chuyến bay trung bình mỗi năm và địa điểm đến", type: "input"},
+        {id: "q36", text: "Anh/Chị chọn những trường hợp đúng với gia đình mình ", type: "checkbox-other", options: ["Chọn thiết bị có đèn LED tiết kiệm năng lượng dù giá cao hơn", "Ưu tiên sử dụng thiết bị có nhãn năng lượng ", "Chọn thiết bị Inverter tiết kiệm năng lượng dù giá cao hơn", "Bật điều hòa 26-27 độ C", "Ưu tiên sửa chữa, tân trang thay vì mua mới", "Ưu tiên đi xe buýt hơn là đi xe máy, ô tô", "Ưu tiên sử dụng thực phẩm có nguồn gốc từ nước ngoài rõ ràng", "Mua sắm nhiều trong một lần để tiết kiệm thời gian, hạn chế đi lại", "Chọn rau củ, trái cây theo mùa", "Thức ăn đã qua chế biến chỉ sử dụng 1 lần"], otherLabel: "Khác"}
     ];
+    
+    const container = document.getElementById('dynamic-questions');
+    container.innerHTML = ''; 
 
-    // Tạo câu hỏi tự động
-    const container = document.getElementById('likert-questions-container');
-    questions.forEach((q, i) => {
-        const div = document.createElement('div');
-        div.className = 'likert-container';
-        div.innerHTML = `
-            <div class="likert-question">${i+1}. ${q}</div>
-            <div class="likert-options">
-                ${[1,2,3,4,5].map(v => `
-                    <div class="option-item">
-                        <input type="radio" name="q${i+1}" value="${v}" id="q${i}_${v}" required>
-                        <label for="q${i}_${v}">${v}</label>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-        container.appendChild(div);
+    allQuestions.forEach((q, i) => {
+        let html = `<div class="question-group">`;
+        if(q.note) html += `<div class="note-highlight">${q.note}</div>`;
+        html += `<label>${i+1}. ${q.text}</label>`;
+
+       
+        if(q.type === "input") {
+            html += `<input type="text" name="${q.id}" required>`;
+        }
+        
+        else if(q.type === "select") {
+            html += `<select name="${q.id}" required>
+                        <option value="">-- Chọn một tùy chọn --</option>
+                        ${q.options.map(o => `<option value="${o}">${o}</option>`).join('')}
+                    </select>`;
+        }
+
+        else if(q.type === "radio" || q.type === "radio-other") {
+            html += `<div class="options-list">
+                ${q.options.map(o => `<label class="option-item-custom"><input type="radio" name="${q.id}" value="${o}" required> ${o}</label>`).join('')}`;
+            if(q.type === "radio-other") {
+                html += `<label class="option-item-custom"><input type="radio" name="${q.id}" value="Other"> ${q.otherLabel}: <input type="text" name="${q.id}_other" style="flex:1; border:none; border-bottom:1px solid #ccc;"></label>`;
+            }
+            html += `</div>`;
+        }
+
+        else if(q.type === "checkbox" || q.type === "checkbox-other") {
+            html += `<div class="options-list">
+                ${q.options.map(o => `<label class="option-item-custom"><input type="checkbox" name="${q.id}" value="${o}"> ${o}</label>`).join('')}`;
+            if(q.type === "checkbox-other") {
+                html += `<label class="option-item-custom"><input type="checkbox" name="${q.id}" value="Other"> ${q.otherLabel}: <input type="text" name="${q.id}_other" style="flex:1; border:none; border-bottom:1px solid #ccc;"></label>`;
+            }
+            html += `</div>`;
+        }
+
+        else if(q.type === "grid-input") {
+            html += `<div class="grid-container">
+                ${q.items.map(item => `<div class="grid-row"><span>${item.label}</span><input type="text" name="${q.id}_${item.code}" placeholder="0"></div>`).join('')}
+            </div>`;
+        }
+
+        html += `</div>`;
+        container.innerHTML += html;
     });
 
-    // Chuyển trang
-    function nextPage(step, prog) {
-        if(step > 1) {
-            const activePage = document.querySelector('.page.active');
-            const inputs = activePage.querySelectorAll('input[required], select[required]');
-            for(let i of inputs) { if(!i.value) { alert("Vui lòng điền đủ thông tin!"); return; } }
-        }
+    window.nextPage = function(step, prog) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById('page' + step).classList.add('active');
         document.getElementById('progress').style.width = prog;
-        window.scrollTo({top: 0, behavior: 'smooth'});
-    }
+        window.scrollTo(0,0);
+    };
 
-    // Gửi form
-    form.addEventListener('submit', e => {
+    const pS = document.getElementById("province"), dS = document.getElementById("district"), wS = document.getElementById("ward");
+    
+    fetch("https://provinces.open-api.vn/api/p/").then(r => r.json()).then(data => {
+        pS.innerHTML = '<option value="">Chọn Tỉnh/Thành...</option>';
+        data.forEach(p => pS.innerHTML += `<option value="${p.name}" data-code="${p.code}">${p.name}</option>`);
+    });
+
+    pS.onchange = function() {
+        const code = this.options[this.selectedIndex].getAttribute("data-code");
+        dS.innerHTML = '<option value="">Chọn...</option>'; dS.disabled = !code;
+        wS.innerHTML = '<option value="">Chọn...</option>'; wS.disabled = true;
+        if(code) fetch(`https://provinces.open-api.vn/api/p/${code}?depth=2`).then(r => r.json()).then(d => {
+            d.districts.forEach(i => dS.innerHTML += `<option value="${i.name}" data-code="${i.code}">${i.name}</option>`);
+        });
+    };
+
+    dS.onchange = function() {
+        const code = this.options[this.selectedIndex].getAttribute("data-code");
+        wS.innerHTML = '<option value="">Chọn...</option>'; wS.disabled = !code;
+        if(code) fetch(`https://provinces.open-api.vn/api/d/${code}?depth=2`).then(r => r.json()).then(d => {
+            d.wards.forEach(i => wS.innerHTML += `<option value="${i.name}">${i.name}</option>`);
+        });
+    };
+
+    document.getElementById('surveyForm').addEventListener('submit', e => {
         e.preventDefault();
         const btn = document.getElementById('submitBtn');
-        btn.disabled = true; btn.innerHTML = 'Đang gửi dữ liệu...';
-
-        fetch(scriptURL, { method: 'POST', body: new FormData(form)})
+        btn.disabled = true; btn.innerHTML = "Đang gửi...";
+        fetch(scriptURL, { method: 'POST', body: new FormData(e.target), mode: 'no-cors'})
         .then(() => {
-            form.style.display = 'none';
+            document.getElementById('surveyForm').style.display = 'none';
             document.getElementById('thank-you').style.display = 'block';
-            document.getElementById('progress').style.width = '100%';
-        }).catch(() => { alert('Lỗi gửi dữ liệu!'); btn.disabled = false; });
+        }).catch(() => alert("Lỗi gửi dữ liệu!"));
     });
-
-    // Xử lý địa chỉ API
-    const pSel = document.getElementById("province"), dSel = document.getElementById("district"), wSel = document.getElementById("ward");
-
-    fetch("https://provinces.open-api.vn/api/p/").then(r => r.json()).then(data => {
-        data.forEach(p => pSel.innerHTML += `<option value="${p.name}" data-code="${p.code}">${p.name}</option>`);
-    });
-
-    pSel.onchange = function() {
-        dSel.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
-        wSel.innerHTML = '<option value="">Chọn Phường/Xã</option>';
-        dSel.disabled = true; wSel.disabled = true;
-        const code = this.options[this.selectedIndex].getAttribute("data-code");
-        if(code) {
-            fetch(`https://provinces.open-api.vn/api/p/${code}?depth=2`).then(r => r.json()).then(data => {
-                data.districts.forEach(d => dSel.innerHTML += `<option value="${d.name}" data-code="${d.code}">${d.name}</option>`);
-                dSel.disabled = false;
-            });
-        }
-    };
-
-    dSel.onchange = function() {
-        wSel.innerHTML = '<option value="">Chọn Phường/Xã</option>';
-        wSel.disabled = true;
-        const code = this.options[this.selectedIndex].getAttribute("data-code");
-        if(code) {
-            fetch(`https://provinces.open-api.vn/api/d/${code}?depth=2`).then(r => r.json()).then(data => {
-                data.wards.forEach(w => wSel.innerHTML += `<option value="${w.name}">${w.name}</option>`);
-                wSel.disabled = false;
-            });
-        }
-    };
 </script>
 </body>
 </html>
