@@ -3,47 +3,76 @@ const form = document.getElementById('surveyForm');
 
 // Hàm chuyển trang mượt mà
 function nextPage(step, prog) {
-    // Kiểm tra nhanh xem trang hiện tại đã điền đủ chưa (trừ trang cuối)
-    if (step > 1) {
-        const activePage = document.querySelector('.page.active');
-        const requiredFields = activePage.querySelectorAll('[required]');
-        let valid = true;
-        requiredFields.forEach(f => { if(!f.value) valid = false; });
-        
-        if(!valid) {
-            alert("Vui lòng điền đủ các thông tin bắt buộc!");
-            return;
+    const activePage = document.querySelector('.page.active');
+    
+    // 1. Kiểm tra logic nhập liệu
+    let valid = true;
+    const inputs = activePage.querySelectorAll('input[required], select[required], textarea[required]');
+    
+    // Dùng Set để lưu tên các nhóm Radio/Checkbox đã kiểm tra, tránh báo lỗi trùng
+    const checkedNames = new Set();
+
+    inputs.forEach(input => {
+        if (input.type === 'radio' || input.type === 'checkbox') {
+            if (!checkedNames.has(input.name)) {
+                const checked = activePage.querySelector(`input[name="${input.name}"]:checked`);
+                if (!checked) valid = false;
+                checkedNames.add(input.name);
+            }
+        } else {
+            if (!input.value.trim()) valid = false;
         }
+    });
+
+    if (!valid) {
+        alert("Vui lòng hoàn thành các câu hỏi bắt buộc (có đánh dấu hoặc chưa điền) trước khi tiếp tục!");
+        return;
     }
 
-    // Chuyển trang
+    // 2. Chuyển trang
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('page' + step).classList.add('active');
+    const targetPage = document.getElementById('page' + step);
     
-    // Cập nhật thanh tiến trình
-    document.getElementById('progress').style.width = prog;
-    
-    // Tối ưu cho Điện thoại: Tự động cuộn lên đầu trang mỗi khi chuyển bước
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (targetPage) {
+        targetPage.classList.add('active');
+        document.getElementById('progress').style.width = prog;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+        console.error("Không tìm thấy ID trang: page" + step);
+    }
 }
 
-// Xử lý gửi dữ liệu và hiện hiệu ứng chờ
+// Xử lý gửi dữ liệu
 form.addEventListener('submit', e => {
     e.preventDefault();
     const submitBtn = document.getElementById('submitBtn');
+    
+    // Hiệu ứng chờ cho chuyên nghiệp
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi...';
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi dữ liệu...';
 
-    fetch(scriptURL, { method: 'POST', body: new FormData(form)})
-    .then(response => {
-        form.reset();
-        form.style.display = 'none';
-        document.getElementById('thank-you').style.display = 'block';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Đóng gói dữ liệu
+    fetch(scriptURL, { 
+        method: 'POST', 
+        body: new FormData(form),
+        mode: 'no-cors' 
+    })
+    .then(() => {
+        // Tạo hiệu ứng chuyển cảnh sau khi gửi thành công
+        setTimeout(() => {
+            form.style.display = 'none';
+            const intro = document.getElementById('intro-section');
+            if(intro) intro.style.display = 'none';
+            
+            document.getElementById('thank-you').style.display = 'block';
+            document.getElementById('progress').style.width = '100%';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 500); 
     })
     .catch(error => {
-        alert("Có lỗi! Vui lòng thử lại.");
+        console.error('Lỗi kết nối!', error.message);
+        alert("Có lỗi xảy ra! Vui lòng kiểm tra lại kết nối mạng.");
         submitBtn.disabled = false;
-        submitBtn.innerText = "Gửi lại";
+        submitBtn.innerHTML = 'Gửi lại khảo sát <i class="fa fa-paper-plane"></i>';
     });
 });
