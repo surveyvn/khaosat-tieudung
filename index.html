@@ -72,9 +72,9 @@ Trân trọng!</div>
             <div class="question-group"><label>Họ và tên</label><input type="text" name="fullname" required></div>
             <div class="question-group"><label>Lớp học phần</label><input type="text" name="class_info" required></div>
             <div style="display: flex; gap: 15px;">
-                <div class="question-group" style="flex: 1;"><label>Tuổi</label><input type="number" name="age" required></div>
-                <div class="question-group" style="flex: 1;"><label>Giới tính</label><select name="gender" required><option value="">Chọn...</option><option>Nam</option><option>Nữ</option></select></div>
-            </div>
+            <div class="question-group" style="flex: 1;"><label>Độ tuổi</label><input type="number" name="age" min="1" required onkeypress="return event.charCode >= 48 && event.charCode <= 57"></div>
+            <div class="question-group" style="flex: 1;"><label>Giới tính</label><select name="gender" required><option value="">Chọn...</option><option>Nam</option><option>Nữ</option></select></div>
+        </div>
             <div class="button-group"><button type="button" class="btn-next" onclick="nextPage(2, '50%')">Tiếp tục <i class="fa fa-arrow-right"></i></button></div>
         </div>
 
@@ -148,7 +148,7 @@ Trân trọng!</div>
                 { label: "Thịt gà, vịt (VNĐ - lần/tuần)", code: "ga" },
                 { label: "Sữa (VNĐ - lần/tuần)", code: "sua" },
                 { label: "Cá (VNĐ - lần/tuần)", code: "ca" },
-                { label: "Rau, củ (VNĐ - lần/tuần)", code: "rau" },
+                { label: "Rau, củ (VNĐ - lần/tuần)", code:  "rau" },
                 { label: "Gạo (VNĐ - lần/tuần)", code: "gao" }
             ]
         },
@@ -196,7 +196,8 @@ Trân trọng!</div>
 
        
         if(q.type === "input") {
-            html += `<input type="text" name="${q.id}" required>`;
+            const isNumber = q.text.includes("Số") || q.text.includes("Chi phí") || q.text.includes("m²") || q.text.includes("VNĐ") || q.text.includes("km") || q.text.includes("năm");
+            html += `<input type="${isNumber ? 'number' : 'text'}" name="${q.id}" min="0" required>`;
         }
         
         else if(q.type === "select") {
@@ -226,7 +227,7 @@ Trân trọng!</div>
 
         else if(q.type === "grid-input") {
             html += `<div class="grid-container">
-                ${q.items.map(item => `<div class="grid-row"><span>${item.label}</span><input type="text" name="${q.id}_${item.code}" placeholder="0"></div>`).join('')}
+                ${q.items.map(item => `<div class="grid-row"><span>${item.label}</span><input type="number" name="${q.id}_${item.code}" placeholder="0" min="0" required></div>`).join('')}
             </div>`;
         }
 
@@ -265,15 +266,57 @@ Trân trọng!</div>
         });
     };
 
-    document.getElementById('surveyForm').addEventListener('submit', e => {
+    document.getElementById('surveyForm').addEventListener('submit', function(e) {
         e.preventDefault();
+        
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        const checkedNames = new Set();
+        checkboxes.forEach(cb => { if(cb.checked) checkedNames.add(cb.name); });
+        
+        const allCheckboxNames = new Set();
+        checkboxes.forEach(cb => { if(!cb.name.includes('_other')) allCheckboxNames.add(cb.name); });
+
+        if (checkedNames.size < allCheckboxNames.size) {
+            alert("Vui lòng trả lời đầy đủ các câu hỏi trắc nghiệm!");
+            return;
+        }
+
         const btn = document.getElementById('submitBtn');
-        btn.disabled = true; btn.innerHTML = "Đang gửi...";
-        fetch(scriptURL, { method: 'POST', body: new FormData(e.target), mode: 'no-cors'})
+        btn.disabled = true; 
+        btn.innerHTML = "Đang gửi...";
+
+        const formData = new FormData(this);
+        const finalData = {};
+        
+        formData.forEach((value, key) => {
+            if (finalData[key]) {
+                finalData[key] = finalData[key] + ", " + value;
+            } else {
+                finalData[key] = value;
+            }
+        });
+
+        const params = new URLSearchParams();
+        for (const key in finalData) { 
+            params.append(key, finalData[key]); 
+        }
+
+        fetch(scriptURL, { 
+            method: 'POST', 
+            body: params, 
+            mode: 'no-cors' 
+        })
         .then(() => {
             document.getElementById('surveyForm').style.display = 'none';
             document.getElementById('thank-you').style.display = 'block';
-        }).catch(() => alert("Lỗi gửi dữ liệu!"));
+            window.scrollTo(0,0);
+        })
+        .catch(error => {
+            console.error('Lỗi!', error);
+            alert("Lỗi gửi dữ liệu! Vui lòng thử lại.");
+            btn.disabled = false; 
+            btn.innerHTML = "Gửi khảo sát";
+        });
     });
 </script>
 </body>
