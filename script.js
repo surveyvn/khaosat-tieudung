@@ -1,4 +1,4 @@
-const scriptURL = "https://script.google.com/macros/s/AKfycbwk-owgztg9rdMhvO6Wjr0UCTdKJKl83hiH0LhSinm-aFIDwmpcFW-hZkiQSORcGN9W/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbyHSXgSIO9pYBIQubS-_65CmrUzKIzJRBKpjRci1M3mLrbw0FZkbBJmcmonZ8bynAkMnQ/exec";
 const DATA_SCRIPT_URL = "";
 const SHEET_SOURCE_URL = "https://docs.google.com/spreadsheets/d/14Zo1oQT0--dw7L5OJ46OGVivvcxqFViqJzTMhkrrXXg/edit?usp=sharing";
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/14Zo1oQT0--dw7L5OJ46OGVivvcxqFViqJzTMhkrrXXg/export?format=csv";
@@ -13,9 +13,9 @@ const state = {
     history: [],
     miConfig: {},
     miSource: {
-        mode: "fallback",
-        label: "Cấu hình nội bộ",
-        detail: "Nguồn ngoài chưa truy cập được, đang dùng hệ số MI viết sẵn trong trang."
+        mode: "dataset",
+        label: "Bảng số liệu MI người dùng cung cấp",
+        detail: "Thiết bị dùng MI quy đổi theo tuổi thọ khi có đủ dữ liệu; máy giặt dùng TMR theo tuổi thọ vì ô MI tổng đang trống. Thực phẩm, điện, quần áo và giày dép dùng hệ số MI trong bảng."
     }
 };
 
@@ -31,11 +31,10 @@ const surveys = [
         groups: [
             {
                 title: "Nguồn năng lượng và gas",
-                description: "Lấy từ phần III của Google Form: loại năng lượng hộ gia đình sử dụng và mức tiêu thụ gas.",
                 questions: [
                     {
                         id: "energy_sources",
-                        label: "8. Loại năng lượng hộ gia đình sử dụng? (Có thể chọn nhiều phương án)",
+                        label: "Loại năng lượng hộ gia đình sử dụng? (Có thể chọn nhiều phương án)",
                         type: "checkbox-other",
                         options: [
                             "Từ điện lưới quốc gia",
@@ -46,7 +45,7 @@ const surveys = [
                     },
                     {
                         id: "gas_usage",
-                        label: "11. Tiêu thụ gas trong gia đình hàng tháng",
+                        label: "Tiêu thụ gas trong gia đình hàng tháng",
                         type: "radio-other",
                         options: ["Không sử dụng", "1 bình gas/tháng", "2 bình gas/tháng"],
                         otherLabel: "Khác",
@@ -56,44 +55,37 @@ const surveys = [
             },
             {
                 title: "Điện năng tiêu thụ",
-                description: "Dùng đúng ý của câu 9 trong Form, tách thành ô rõ ràng để người dùng dễ nhập.",
                 questions: [
-                    { id: "monthly_kwh", label: "9a. Lượng điện tiêu thụ trung bình mỗi tháng (kWh)", type: "number", min: 0, required: true },
-                    { id: "electric_bill", label: "9b. Tiền điện phải đóng trung bình mỗi tháng (VNĐ)", type: "number", min: 0, required: true }
+                    { id: "monthly_kwh", label: "Lượng điện tiêu thụ trung bình mỗi tháng (kWh)", type: "number", min: 0, required: true },
+                    { id: "electric_bill", label: "Tiền điện phải đóng trung bình mỗi tháng (VNĐ)", type: "number", min: 0, required: true }
                 ]
             },
             {
                 title: "Thiết bị điện tử chính",
-                description: "Áp dụng từ câu 10 trong Form, mỗi thiết bị nhập ở một ô riêng để nhìn gọn và giống dạng calculator.",
                 questions: [
                     {
                         id: "devices",
-                        label: "10. Số lượng thiết bị điện tử chính có trong hộ gia đình",
+                        label: "Số lượng thiết bị điện tử chính có trong hộ gia đình",
                         type: "grid",
                         items: [
-                            { code: "tv", label: "Tivi", factor: 1500 },
-                            { code: "aircon", label: "Máy lạnh (điều hòa)", factor: 3500 },
-                            { code: "fridge", label: "Tủ lạnh", factor: 4500 },
-                            { code: "desktop", label: "Máy tính bàn", factor: 2000 },
-                            { code: "laptop", label: "Laptop", factor: 1200 },
-                            { code: "microwave", label: "Lò vi sóng", factor: 800 },
-                            { code: "dishwasher", label: "Máy rửa chén", factor: 3000 },
-                            { code: "blender", label: "Máy xay sinh tố", factor: 200 },
-                            { code: "airfryer", label: "Nồi chiên không dầu", factor: 500 },
-                            { code: "purifier", label: "Máy lọc không khí", factor: 700 },
-                            { code: "stove", label: "Bếp điện", factor: 1200 },
-                            { code: "washer", label: "Máy giặt", factor: 4000 }
+                            { code: "tv", label: "Tivi", factor: 9211.8 },
+                            { code: "fridge", label: "Tủ lạnh", factor: 1158.6 },
+                            { code: "aircon", label: "Máy lạnh (điều hòa)", factor: 28.8 },
+                            { code: "phone", label: "Điện thoại", factor: 8.4 },
+                            { code: "laptop", label: "Laptop", factor: 1384.5 },
+                            { code: "microwave", label: "Lò vi sóng", factor: 558.9 },
+                            { code: "stove", label: "Bếp điện và lò nướng", factor: 1131.8 },
+                            { code: "washer", label: "Máy giặt", factor: 82.9 }
                         ]
                     }
                 ]
             },
             {
                 title: "Tiết kiệm năng lượng",
-                description: "Lấy đúng tinh thần câu 12 trong Form và cho thành một box riêng.",
                 questions: [
                     {
                         id: "saving_habits",
-                        label: "12. Hộ gia đình có biện pháp tiết kiệm năng lượng? Nếu có vui lòng nêu ví dụ",
+                        label: "Hộ gia đình có biện pháp tiết kiệm năng lượng? Nếu có vui lòng nêu ví dụ",
                         type: "text",
                         required: true
                     }
@@ -103,25 +95,33 @@ const surveys = [
         calculate(formData) {
             let usedExternal = false;
             const monthlyKwh = Number(formData.get("electricity_monthly_kwh")) || 0;
-            const electricBill = Number(formData.get("electricity_electric_bill")) || 0;
-            const billBasedEstimate = electricBill > 0 ? electricBill / 3000 : 0;
-            const energyScalar = pickScalar("electricity", "energy_per_kwh", 2.2);
+            const energyScalar = pickScalar("electricity", "energy_per_kwh", 189.75);
             usedExternal = usedExternal || energyScalar.source === "external";
-            const energyMi = (monthlyKwh || billBasedEstimate) * 12 * energyScalar.value;
+            const energyMi = monthlyKwh * 12 * energyScalar.value;
 
             const devicesQuestion = this.groups.flatMap((group) => group.questions).find((question) => question.id === "devices");
+            const deviceDivisor = pickScalar("electricity", "device_divisor", 1);
+            const safeDeviceDivisor = deviceDivisor.value > 0 ? deviceDivisor.value : 1;
+            usedExternal = usedExternal || deviceDivisor.source === "external";
             const deviceRows = devicesQuestion.items.map((item) => {
                 const quantity = Number(formData.get(`electricity_devices_${item.code}`)) || 0;
                 const factorInfo = pickFactor("electricity", item.code, item.factor);
                 usedExternal = usedExternal || factorInfo.source === "external";
                 return {
                     label: item.label,
-                    value: ((quantity * factorInfo.value) / 10).toFixed(1)
+                    value: ((quantity * factorInfo.value) / safeDeviceDivisor).toFixed(1)
                 };
             }).filter((row) => Number(row.value) > 0);
 
             const gasMultiplier = formData.get("electricity_gas_usage");
-            const gasMi = gasMultiplier === "1 bình gas/tháng" ? 180 : gasMultiplier === "2 bình gas/tháng" ? 360 : 0;
+            const gasOptions = {
+                "1 bình gas/tháng": { code: "gas_1_cylinder", fallback: 0 },
+                "2 bình gas/tháng": { code: "gas_2_cylinders", fallback: 0 }
+            };
+            const gasOption = gasOptions[gasMultiplier];
+            const gasFactor = gasOption ? pickFactor("electricity", gasOption.code, gasOption.fallback) : { value: 0, source: "fallback" };
+            usedExternal = usedExternal || gasFactor.source === "external";
+            const gasMi = gasFactor.value;
             const deviceTotal = deviceRows.reduce((sum, row) => sum + Number(row.value), 0);
             const total = energyMi + deviceTotal + gasMi;
 
@@ -130,6 +130,8 @@ const surveys = [
             ];
             if (gasMi > 0) {
                 breakdown.push({ label: "Ước tính gas sử dụng", value: gasMi.toFixed(1) });
+            } else if (gasMultiplier && gasMultiplier !== "Không sử dụng") {
+                breakdown.push({ label: "Gas - chưa có hệ số trong bảng", value: "0.0" });
             }
             deviceRows.forEach((row) => breakdown.push({ label: `Thiết bị - ${row.label}`, value: row.value }));
 
@@ -144,30 +146,28 @@ const surveys = [
         id: "food",
         name: "Khảo sát thực phẩm",
         icon: "fa-utensils",
-        description: "Áp dụng các câu ở mục V trong Google Form, tách thành cụm theo nấu ăn tại nhà, đặt đồ ăn và đi ăn ngoài.",
         available: true,
         groups: [
             {
                 title: "Thói quen tiêu thụ thực phẩm",
-                description: "Các câu 16, 17a và 19a trong Form.",
                 questions: [
                     {
                         id: "meal_habit",
-                        label: "16. Hộ gia đình thường xuyên (có thể chọn nhiều phương án)",
+                        label: "Hộ gia đình thường xuyên (có thể chọn nhiều phương án)",
                         type: "checkbox-other",
-                        options: ["a. Nấu ăn ở nhà", "b. Mua đồ ăn sẵn ở ngoài rồi về ăn", "c. Đi ăn ở ngoài"],
+                        options: ["Nấu ăn ở nhà", "Mua đồ ăn sẵn ở ngoài rồi về ăn", "Đi ăn ở ngoài"],
                         otherLabel: "Khác"
                     },
                     {
                         id: "food_source",
-                        label: "17a. Hộ gia đình mua thực phẩm chủ yếu từ nguồn nào? (Có thể chọn nhiều đáp án)",
+                        label: "Hộ gia đình mua thực phẩm chủ yếu từ nguồn nào? (Có thể chọn nhiều đáp án)",
                         type: "checkbox-other",
                         options: ["Mua ở siêu thị", "Mua ở chợ", "Mua ở cửa hàng tiện lợi", "Đặt online"],
                         otherLabel: "Khác"
                     },
                     {
                         id: "distance",
-                        label: "19a. Khoảng cách từ hộ gia đình đến nơi mua thực phẩm (km hoặc phút)",
+                        label: "Khoảng cách từ hộ gia đình đến nơi mua thực phẩm (km hoặc phút)",
                         type: "text",
                         required: true
                     }
@@ -175,45 +175,43 @@ const surveys = [
             },
             {
                 title: "Mua thực phẩm để nấu ăn tại nhà",
-                description: "Từ câu 18a trong Form, đổi sang dạng số lượng sử dụng mỗi tuần để phù hợp tính MI.",
                 questions: [
                     {
                         id: "weekly_food",
-                        label: "18a. Khối lượng thực phẩm tiêu thụ trung bình mỗi tuần",
+                        label: "Khối lượng thực phẩm tiêu thụ trung bình mỗi tuần",
                         type: "grid",
                         items: [
-                            { code: "pork", label: "Thịt heo (kg/tuần)", factor: 35 },
-                            { code: "beef", label: "Thịt bò (kg/tuần)", factor: 140 },
-                            { code: "chicken", label: "Thịt gà, vịt (kg/tuần)", factor: 10 },
-                            { code: "milk", label: "Sữa (đơn vị/tuần)", factor: 2.5 },
-                            { code: "fish", label: "Cá (kg/tuần)", factor: 6.5 },
-                            { code: "vegetable", label: "Rau, củ (kg/tuần)", factor: 2.4 },
-                            { code: "rice", label: "Gạo (kg/tuần)", factor: 10 }
+                            { code: "pork", label: "Thịt heo (kg/tuần)", factor: 2697 },
+                            { code: "beef", label: "Thịt bò (kg/tuần)", factor: 3325.19 },
+                            { code: "chicken", label: "Thịt gà, vịt (kg/tuần)", factor: 1390.3 },
+                            { code: "milk", label: "Sữa (kg/tuần)", factor: 309.504 },
+                            { code: "fish", label: "Cá (kg/tuần)", factor: 427.5 },
+                            { code: "vegetable", label: "Rau, củ (kg/tuần)", factor: 1022.1245 },
+                            { code: "rice", label: "Gạo (kg/tuần)", factor: 2.85 }
                         ]
                     }
                 ]
             },
             {
                 title: "Đặt đồ ăn online",
-                description: "Từ các câu 17b, 18b và 19b trong Form.",
                 questions: [
                     {
                         id: "delivery_range",
-                        label: "17b. Đồ ăn được đặt mua online trong phạm vi",
+                        label: "Đồ ăn được đặt mua online trong phạm vi",
                         type: "radio",
                         options: ["1-2 km", "2-5 km", "5-10 km", "hơn 10 km"],
                         required: true
                     },
                     {
                         id: "delivery_type",
-                        label: "18b. Loại đồ ăn, uống thường được đặt mua online",
+                        label: "Loại đồ ăn, uống thường được đặt mua online",
                         type: "checkbox-other",
                         options: ["Bữa ăn chính", "Đồ ăn vặt", "Đồ uống (trà sữa, nước ép)"],
                         otherLabel: "Khác"
                     },
                     {
                         id: "delivery_times",
-                        label: "19b. Số lần đặt đồ ăn online trong tuần",
+                        label: "Số lần đặt đồ ăn online trong tuần",
                         type: "radio",
                         options: ["1-2 lần/tuần", "3-4 lần/tuần", "5-6 lần/tuần", "hơn 6 lần/tuần"],
                         required: true
@@ -222,38 +220,37 @@ const surveys = [
             },
             {
                 title: "Đi ăn ngoài và chế độ ăn đặc biệt",
-                description: "Từ các câu 17c, 18c, 19 và 20 trong Form.",
                 questions: [
                     {
                         id: "eatout_times",
-                        label: "17c. Số lần đi ăn ở ngoài",
+                        label: "Số lần đi ăn ở ngoài",
                         type: "radio",
                         options: ["dưới 3 lần/tuần", "3-6 lần/tuần", "6-10 lần/tuần", "hơn 10 lần/tuần"],
                         required: true
                     },
                     {
                         id: "eatout_choices",
-                        label: "18c. Số lần chọn món khi đi ăn ở ngoài",
+                        label: "Số lần chọn món khi đi ăn ở ngoài",
                         type: "grid",
                         items: [
-                            { code: "pork", label: "Món có thịt heo (lần/tuần)", factor: 8 },
-                            { code: "beef", label: "Món có thịt bò (lần/tuần)", factor: 10 },
-                            { code: "chicken", label: "Món có thịt gà (lần/tuần)", factor: 6 },
-                            { code: "fish", label: "Món có cá (lần/tuần)", factor: 5 },
-                            { code: "milk", label: "Món / đồ uống có sữa (lần/tuần)", factor: 3 },
-                            { code: "vegetable", label: "Món rau, củ (lần/tuần)", factor: 2 },
-                            { code: "rice", label: "Cơm trắng (lần/tuần)", factor: 1.5 }
+                            { code: "pork", label: "Món có thịt heo (lần/tuần)", factor: 0 },
+                            { code: "beef", label: "Món có thịt bò (lần/tuần)", factor: 0 },
+                            { code: "chicken", label: "Món có thịt gà (lần/tuần)", factor: 0 },
+                            { code: "fish", label: "Món có cá (lần/tuần)", factor: 0 },
+                            { code: "milk", label: "Món / đồ uống có sữa (lần/tuần)", factor: 0 },
+                            { code: "vegetable", label: "Món rau, củ (lần/tuần)", factor: 0 },
+                            { code: "rice", label: "Cơm trắng (lần/tuần)", factor: 0 }
                         ]
                     },
                     {
                         id: "vegetarian",
-                        label: "19. Hộ gia đình có bao nhiêu thành viên ăn chay? Nếu có, chế độ ăn chay như thế nào? Số lần ăn chay trong tháng?",
+                        label: "Hộ gia đình có bao nhiêu thành viên ăn chay? Nếu có, chế độ ăn chay như thế nào? Số lần ăn chay trong tháng?",
                         type: "text",
                         required: true
                     },
                     {
                         id: "organic",
-                        label: "20. Hộ gia đình có mua thực phẩm hữu cơ hoặc địa phương không? Nếu có, số lần mua trong tuần?",
+                        label: "Hộ gia đình có mua thực phẩm hữu cơ hoặc địa phương không? Nếu có, số lần mua trong tuần?",
                         type: "text",
                         required: true
                     }
@@ -276,14 +273,25 @@ const surveys = [
             const eatoutQuestion = this.groups.flatMap((group) => group.questions).find((question) => question.id === "eatout_choices");
             const eatoutRows = eatoutQuestion.items.map((item) => {
                 const times = Number(formData.get(`food_eatout_choices_${item.code}`)) || 0;
+                const factorInfo = pickFactor("food", `eatout_${item.code}`, item.factor);
+                usedExternal = usedExternal || factorInfo.source === "external";
                 return {
                     label: item.label,
-                    value: (times * 52 * item.factor).toFixed(1)
+                    value: (times * 52 * factorInfo.value).toFixed(1)
                 };
             }).filter((row) => Number(row.value) > 0);
 
             const deliveryTimes = formData.get("food_delivery_times");
-            const deliveryMi = deliveryTimes === "1-2 lần/tuần" ? 40 : deliveryTimes === "3-4 lần/tuần" ? 90 : deliveryTimes === "5-6 lần/tuần" ? 140 : deliveryTimes === "hơn 6 lần/tuần" ? 200 : 0;
+            const deliveryOptions = {
+                "1-2 lần/tuần": { code: "delivery_1_2", fallback: 0 },
+                "3-4 lần/tuần": { code: "delivery_3_4", fallback: 0 },
+                "5-6 lần/tuần": { code: "delivery_5_6", fallback: 0 },
+                "hơn 6 lần/tuần": { code: "delivery_more_6", fallback: 0 }
+            };
+            const deliveryOption = deliveryOptions[deliveryTimes];
+            const deliveryFactor = deliveryOption ? pickFactor("food", deliveryOption.code, deliveryOption.fallback) : { value: 0, source: "fallback" };
+            usedExternal = usedExternal || deliveryFactor.source === "external";
+            const deliveryMi = deliveryFactor.value;
             const total = weeklyRows.reduce((sum, row) => sum + Number(row.value), 0) + eatoutRows.reduce((sum, row) => sum + Number(row.value), 0) + deliveryMi;
 
             const breakdown = [...weeklyRows];
@@ -291,6 +299,13 @@ const surveys = [
                 breakdown.push({ label: "Đặt đồ ăn online", value: deliveryMi.toFixed(1) });
             }
             eatoutRows.forEach((row) => breakdown.push({ label: `Ăn ngoài - ${row.label}`, value: row.value }));
+            if (deliveryTimes && deliveryMi === 0) {
+                breakdown.push({ label: "Đặt đồ ăn online - chưa có hệ số trong bảng", value: "0.0" });
+            }
+            const hasEatoutChoices = eatoutQuestion.items.some((item) => Number(formData.get(`food_eatout_choices_${item.code}`)) > 0);
+            if (hasEatoutChoices && eatoutRows.length === 0) {
+                breakdown.push({ label: "Ăn ngoài - bảng chưa có hệ số theo mỗi lần ăn", value: "0.0" });
+            }
 
             return {
                 total: total.toFixed(1),
@@ -303,33 +318,28 @@ const surveys = [
         id: "fashion",
         name: "Khảo sát thời trang",
         icon: "fa-shirt",
-        description: "Lấy từ mục VI của Google Form, gom phần mua sắm quần áo, giày dép, đồ điện tử, nội thất và đồ cũ.",
         available: true,
         groups: [
             {
                 title: "Mua sắm hằng năm",
-                description: "Từ câu 21 trong Form, chia từng hạng mục thành ô nhập riêng để dễ nhìn hơn.",
                 questions: [
                     {
                         id: "annual_purchase",
-                        label: "21. Trong 5 năm gần đây, số lượng mua sắm mỗi năm của hộ gia đình",
+                        label: "Khối lượng mua sắm trung bình mỗi năm của hộ gia đình",
                         type: "grid",
                         items: [
-                            { code: "clothes", label: "Quần, áo (bộ/năm)", factor: 8 },
-                            { code: "shoes", label: "Giày, dép (đôi/năm)", factor: 12 },
-                            { code: "electronics", label: "Đồ điện tử (cái/năm)", factor: 28 },
-                            { code: "furniture", label: "Nội thất (cái/năm)", factor: 40 }
+                            { code: "clothes", label: "Quần, áo (kg/năm)", factor: 1264.145 },
+                            { code: "shoes", label: "Giày, dép (kg/năm)", factor: 449.9 }
                         ]
                     }
                 ]
             },
             {
                 title: "Đồ cũ và kéo dài vòng đời sử dụng",
-                description: "Dùng từ câu 22 và thêm phần lựa chọn phong cách tiêu dùng để kết quả có ngữ cảnh hơn.",
                 questions: [
                     {
                         id: "used_items",
-                        label: "22. Hộ gia đình có mua đồ dùng, thiết bị, nội thất cũ không? Nếu có vui lòng nêu cụ thể",
+                        label: "Hộ gia đình có mua đồ dùng, thiết bị, nội thất cũ không? Nếu có vui lòng nêu cụ thể",
                         type: "text",
                         required: true
                     },
@@ -357,15 +367,14 @@ const surveys = [
             }).filter((row) => Number(row.value) > 0);
 
             const usedText = String(formData.get("fashion_used_items") || "").toLowerCase();
-            const reuseBonus = usedText.includes("cũ") || usedText.includes("second") ? -30 : 0;
-            const total = breakdown.reduce((sum, row) => sum + Number(row.value), 0) + reuseBonus;
+            const total = breakdown.reduce((sum, row) => sum + Number(row.value), 0);
 
-            if (reuseBonus < 0) {
-                breakdown.push({ label: "Điều chỉnh nhờ sử dụng đồ cũ", value: reuseBonus.toFixed(1) });
+            if (usedText.includes("cũ") || usedText.includes("second")) {
+                breakdown.push({ label: "Đồ cũ - bảng chưa có hệ số điều chỉnh", value: "0.0" });
             }
 
             return {
-                total: Math.max(total, 0).toFixed(1),
+                total: total.toFixed(1),
                 breakdown,
                 sourceMode: usedExternal ? "external" : "fallback"
             };
@@ -490,13 +499,79 @@ function normalizeExternalConfig(data) {
     if (data.surveys && typeof data.surveys === "object") return data.surveys;
     if (!Array.isArray(data.rows)) return {};
 
-    return data.rows.reduce((acc, row) => {
-        if (!row?.survey || !row?.code) return acc;
-        if (!acc[row.survey]) {
-            acc[row.survey] = { factors: {}, scalars: {} };
+    return rowsToMiConfig(data.rows);
+}
+
+function normalizeConfigHeader(value) {
+    return String(value || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/[^a-z0-9_]/g, "");
+}
+
+function findConfigIndex(headers, aliases) {
+    return aliases.reduce((foundIndex, alias) => {
+        if (foundIndex >= 0) return foundIndex;
+        return headers.indexOf(normalizeConfigHeader(alias));
+    }, -1);
+}
+
+function readConfigValue(row, aliases) {
+    for (const alias of aliases) {
+        if (Object.prototype.hasOwnProperty.call(row, alias)) {
+            return row[alias];
         }
-        const bucket = row.type === "scalar" ? acc[row.survey].scalars : acc[row.survey].factors;
-        bucket[row.code] = Number(row.value);
+
+        const normalizedAlias = normalizeConfigHeader(alias);
+        const matchedKey = Object.keys(row).find((key) => normalizeConfigHeader(key) === normalizedAlias);
+        if (matchedKey) {
+            return row[matchedKey];
+        }
+    }
+
+    return "";
+}
+
+function parseConfigNumber(value) {
+    if (typeof value === "number") return value;
+
+    let normalized = String(value || "")
+        .trim()
+        .replace(/\s/g, "");
+
+    const commaCount = (normalized.match(/,/g) || []).length;
+    const dotCount = (normalized.match(/\./g) || []).length;
+
+    if (commaCount > 0 && dotCount > 0) {
+        normalized = normalized.replace(/\./g, "").replace(",", ".");
+    } else if (commaCount === 1 && /^\d+,\d{3}$/.test(normalized)) {
+        normalized = normalized.replace(",", "");
+    } else if (commaCount === 1) {
+        normalized = normalized.replace(",", ".");
+    } else if (dotCount === 1 && /^\d+\.\d{3}$/.test(normalized)) {
+        normalized = normalized.replace(".", "");
+    }
+
+    return Number(normalized);
+}
+
+function rowsToMiConfig(rows) {
+    return rows.reduce((acc, row) => {
+        const survey = String(readConfigValue(row, ["survey", "survey_id", "surveyId", "khao_sat", "khảo sát", "nhom", "nhóm"])).trim();
+        const code = String(readConfigValue(row, ["code", "ma", "mã", "ma_he_so", "mã hệ số", "item"])).trim();
+        const value = parseConfigNumber(readConfigValue(row, ["value", "gia_tri", "giá trị", "he_so", "hệ số", "factor", "mi"]));
+        const type = String(readConfigValue(row, ["type", "loai", "loại", "kind"]) || "factor").trim().toLowerCase();
+
+        if (!survey || !code || Number.isNaN(value)) return acc;
+        if (!acc[survey]) {
+            acc[survey] = { factors: {}, scalars: {} };
+        }
+
+        const bucket = type === "scalar" ? acc[survey].scalars : acc[survey].factors;
+        bucket[code] = value;
         return acc;
     }, {});
 }
@@ -530,11 +605,11 @@ function parseCsvConfig(csvText) {
     const lines = csvText.split(/\r?\n/).filter(Boolean);
     if (lines.length < 2) return {};
 
-    const headers = parseCsvLine(lines[0]).map((header) => header.toLowerCase());
-    const surveyIndex = headers.indexOf("survey");
-    const codeIndex = headers.indexOf("code");
-    const valueIndex = headers.indexOf("value");
-    const typeIndex = headers.indexOf("type");
+    const headers = parseCsvLine(lines[0]).map(normalizeConfigHeader);
+    const surveyIndex = findConfigIndex(headers, ["survey", "survey_id", "khao_sat", "khảo sát", "nhom", "nhóm"]);
+    const codeIndex = findConfigIndex(headers, ["code", "ma", "mã", "ma_he_so", "mã hệ số", "item"]);
+    const valueIndex = findConfigIndex(headers, ["value", "gia_tri", "giá trị", "he_so", "hệ số", "factor", "mi"]);
+    const typeIndex = findConfigIndex(headers, ["type", "loai", "loại", "kind"]);
 
     if (surveyIndex === -1 || codeIndex === -1 || valueIndex === -1) return {};
 
@@ -542,7 +617,7 @@ function parseCsvConfig(csvText) {
         const cells = parseCsvLine(line);
         const surveyId = cells[surveyIndex];
         const code = cells[codeIndex];
-        const value = Number(cells[valueIndex]);
+        const value = parseConfigNumber(cells[valueIndex]);
         const type = typeIndex >= 0 ? cells[typeIndex] : "factor";
 
         if (!surveyId || !code || Number.isNaN(value)) return acc;
@@ -703,7 +778,7 @@ function renderSurveyCards() {
             <span class="survey-badge">${survey.available ? `Khảo sát ${index + 1}` : "Sắp có"}</span>
             <i class="fas ${survey.icon}"></i>
             <h3>${survey.name}</h3>
-            <p>${survey.description}</p>
+            ${survey.description ? `<p>${survey.description}</p>` : ""}
         </article>
     `).join("");
 
@@ -800,7 +875,7 @@ function renderSurveyQuestions(survey) {
 
     surveyTitle.textContent = survey.name;
     surveyMeta.innerHTML = `
-        <strong>Mô tả:</strong> ${survey.description}<br>
+        ${survey.description ? `<strong>Mô tả:</strong> ${survey.description}<br>` : ""}
         <strong>Nguồn câu hỏi:</strong> Google Form khảo sát tiêu dùng hộ gia đình, đã được nhóm lại theo từng box hiển thị.<br>
         <strong>Nguồn tính MI hiện tại:</strong> ${state.miSource.label}. ${state.miSource.detail}
     `;
@@ -809,7 +884,7 @@ function renderSurveyQuestions(survey) {
         <section class="question-cluster">
             <div class="question-cluster-header">
                 <h3>${group.title}</h3>
-                <p>${group.description}</p>
+                ${group.description ? `<p>${group.description}</p>` : ""}
             </div>
             ${group.questions.map((question) => renderQuestion(question, survey.id)).join("")}
         </section>
@@ -892,7 +967,7 @@ function renderResult(result, survey) {
     miSourceStatus.className = `source-status ${isExternal ? "external" : "fallback"}`;
     miSourceStatus.textContent = isExternal
         ? `Kết quả này đang dùng hệ số MI từ nguồn ngoài: ${state.miSource.label}.`
-        : "Kết quả này đang dùng hệ số MI fallback nội bộ vì nguồn ngoài chưa sẵn sàng.";
+        : `Kết quả này đang dùng ${state.miSource.label}.`;
 
     const comparison = getComparisonSummary(survey.id, Number(result.total));
     if (comparison.count > 0) {
@@ -924,25 +999,47 @@ function renderResult(result, survey) {
     sheetNotice.innerHTML = `
         Nguồn sheet hiện tại: <a href="${SHEET_SOURCE_URL}" target="_blank" rel="noreferrer">Google Sheet MI</a>.
         Endpoint ưu tiên: <a href="${MI_CONFIG_ENDPOINT}" target="_blank" rel="noreferrer">App Script / JSON</a>.
-        Web app lưu dữ liệu riêng: ${DATA_SCRIPT_URL ? `<a href="${DATA_SCRIPT_URL}" target="_blank" rel="noreferrer">đã cấu hình</a>` : "chưa cấu hình"}.
+        Dữ liệu khảo sát được gửi về Web App Google Apps Script để lưu vào tab <strong>survey_responses</strong>.
         Lịch sử bên dưới chỉ hiển thị của chính bạn trên thiết bị này, không phải của người khác.
     `;
 }
 
+function formDataToObject(formData) {
+    const data = {};
+
+    formData.forEach((value, key) => {
+        if (Object.prototype.hasOwnProperty.call(data, key)) {
+            data[key] = Array.isArray(data[key]) ? data[key].concat(value) : [data[key], value];
+        } else {
+            data[key] = value;
+        }
+    });
+
+    return data;
+}
+
 function buildSubmissionPayload(formData, result) {
     const payload = new URLSearchParams();
+    const submittedAt = new Date().toISOString();
+    const responseData = formDataToObject(formData);
 
     if (state.profile) {
         Object.entries(state.profile).forEach(([key, value]) => payload.append(key, value));
     }
 
-    payload.append("submitted_at", new Date().toISOString());
+    payload.append("submitted_at", submittedAt);
+    payload.append("submission_id", `${deviceSessionId}-${Date.now()}`);
     payload.append("device_session_id", deviceSessionId);
     payload.append("survey_id", state.selectedSurveyId);
     payload.append("survey_name", state.selectedSurveyName);
     payload.append("result_total", result?.total ?? "");
     payload.append("result_source_mode", result?.sourceMode ?? "");
+    payload.append("mi_source_label", result?.sourceMode === "external" ? state.miSource.label : "Bảng số liệu MI");
+    payload.append("mi_source_detail", state.miSource.detail || "");
     payload.append("result_breakdown_json", JSON.stringify(result?.breakdown ?? []));
+    payload.append("response_json", JSON.stringify(responseData));
+    payload.append("profile_json", JSON.stringify(state.profile ?? {}));
+    payload.append("user_agent", navigator.userAgent || "");
     formData.forEach((value, key) => payload.append(key, value));
 
     return payload;
@@ -955,8 +1052,10 @@ async function submitToGoogleScript(formData, result) {
             body: buildSubmissionPayload(formData, result),
             mode: "no-cors"
         });
+        return { configured: true, success: true };
     } catch (error) {
         console.error("Submit failed:", error);
+        return { configured: true, success: false };
     }
 }
 
@@ -993,7 +1092,7 @@ async function handleSurveySubmit(event) {
     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
 
     const result = survey.calculate(formData);
-    await submitToGoogleScript(formData, result);
+    const primarySheetStatus = await submitToGoogleScript(formData, result);
     const dataSheetStatus = await submitToDataSheet(formData, result);
     renderResult(result, survey);
 
@@ -1003,8 +1102,12 @@ async function handleSurveySubmit(event) {
         fullname: state.profile?.fullname || "Người dùng",
         location: [state.profile?.ward, state.profile?.district, state.profile?.province].filter(Boolean).join(", "),
         total: result.total,
-        sourceLabel: result.sourceMode === "external" ? state.miSource.label : "Cấu hình nội bộ",
-        dataSheetLabel: !dataSheetStatus.configured ? "Chưa cấu hình sheet riêng" : dataSheetStatus.success ? "Đã gửi sheet dữ liệu" : "Lỗi gửi sheet dữ liệu",
+        sourceLabel: result.sourceMode === "external" ? state.miSource.label : "Bảng số liệu MI",
+        dataSheetLabel: primarySheetStatus.success
+            ? "Đã gửi Google Sheet"
+            : dataSheetStatus.success
+                ? "Đã gửi sheet dữ liệu"
+                : "Lỗi gửi Google Sheet",
         completedAt: new Date().toISOString(),
         completedAtLabel: new Date().toLocaleString("vi-VN")
     });
