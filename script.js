@@ -380,10 +380,10 @@ const surveys = [
             };
         }
     },
-    { id: "housing", name: "Khảo sát nhà ở", icon: "fa-house", description: "Sẽ cập nhật từ phần nhà ở trong Form.", available: false },
-    { id: "water", name: "Khảo sát nước", icon: "fa-droplet", description: "Sẽ cập nhật từ phần tiêu thụ nước trong Form.", available: false },
-    { id: "transport", name: "Khảo sát giao thông", icon: "fa-bus", description: "Sẽ cập nhật từ phần giao thông và du lịch trong Form.", available: false },
-    { id: "waste", name: "Khảo sát rác thải", icon: "fa-recycle", description: "Sẽ cập nhật sau.", available: false },
+    { id: "housing", name: "Khảo sát nhà ở", icon: "fa-house", description: "Sẽ cập nhật sau", available: false },
+    { id: "water", name: "Khảo sát nước", icon: "fa-droplet", description: "Sẽ cập nhật sau", available: false },
+    { id: "transport", name: "Khảo sát giao thông", icon: "fa-bus", description: "Sẽ cập nhật sau", available: false },
+    { id: "waste", name: "Khảo sát rác thải", icon: "fa-recycle", description: "Sẽ cập nhật sau", available: false },
     { id: "lifestyle", name: "Khảo sát lối sống", icon: "fa-seedling", description: "Sẽ cập nhật sau.", available: false }
 ];
 
@@ -875,9 +875,7 @@ function renderSurveyQuestions(survey) {
 
     surveyTitle.textContent = survey.name;
     surveyMeta.innerHTML = `
-        ${survey.description ? `<strong>Mô tả:</strong> ${survey.description}<br>` : ""}
-        <strong>Nguồn câu hỏi:</strong> Google Form khảo sát tiêu dùng hộ gia đình, đã được nhóm lại theo từng box hiển thị.<br>
-        <strong>Nguồn tính MI hiện tại:</strong> ${state.miSource.label}. ${state.miSource.detail}
+        ${survey.description ? `<strong>Mô tả:</strong> ${survey.description}` : ""}
     `;
 
     dynamicQuestions.innerHTML = survey.groups.map((group) => `
@@ -999,7 +997,7 @@ function renderResult(result, survey) {
     sheetNotice.innerHTML = `
         Nguồn sheet hiện tại: <a href="${SHEET_SOURCE_URL}" target="_blank" rel="noreferrer">Google Sheet MI</a>.
         Endpoint ưu tiên: <a href="${MI_CONFIG_ENDPOINT}" target="_blank" rel="noreferrer">App Script / JSON</a>.
-        Dữ liệu khảo sát được gửi về Web App Google Apps Script để lưu vào tab <strong>survey_responses</strong>.
+        Dữ liệu khảo sát được gửi về Web App Google Apps Script và tự tách vào tab Điện, Thực phẩm hoặc Thời trang.
         Lịch sử bên dưới chỉ hiển thị của chính bạn trên thiết bị này, không phải của người khác.
     `;
 }
