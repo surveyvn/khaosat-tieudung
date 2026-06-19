@@ -1,4 +1,4 @@
-const scriptURL = "https://script.google.com/macros/s/AKfycbwk-owgztg9rdMhvO6Wjr0UCTdKJKl83hiH0LhSinm-aFIDwmpcFW-hZkiQSORcGN9W/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbyHSXgSIO9pYBIQubS-_65CmrUzKIzJRBKpjRci1M3mLrbw0FZkbBJmcmonZ8bynAkMnQ/exec";
 const DATA_SCRIPT_URL = "";
 const SHEET_SOURCE_URL = "https://docs.google.com/spreadsheets/d/14Zo1oQT0--dw7L5OJ46OGVivvcxqFViqJzTMhkrrXXg/edit?usp=sharing";
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/14Zo1oQT0--dw7L5OJ46OGVivvcxqFViqJzTMhkrrXXg/export?format=csv";
@@ -55,9 +55,34 @@ const surveys = [
             },
             {
                 title: "Điện năng tiêu thụ",
+                description: "Chọn một trong hai cách nhập. Hệ thống sẽ tự quy đổi dữ liệu còn lại để tính MI.",
                 questions: [
-                    { id: "monthly_kwh", label: "Lượng điện tiêu thụ trung bình mỗi tháng (kWh)", type: "number", min: 0, required: true },
-                    { id: "electric_bill", label: "Tiền điện phải đóng trung bình mỗi tháng (VNĐ)", type: "number", min: 0, required: true }
+                    {
+                        id: "consumption_basis",
+                        label: "Bạn muốn cung cấp mức sử dụng điện theo cách nào?",
+                        type: "electricity-choice",
+                        required: true,
+                        options: [
+                            {
+                                value: "kwh",
+                                inputId: "monthly_kwh",
+                                icon: "fa-bolt",
+                                title: "Theo điện năng",
+                                description: "Nhập số kWh trên hóa đơn điện",
+                                inputLabel: "Lượng điện trung bình mỗi tháng",
+                                unit: "kWh/tháng"
+                            },
+                            {
+                                value: "bill",
+                                inputId: "electric_bill",
+                                icon: "fa-receipt",
+                                title: "Theo tiền điện",
+                                description: "Nhập số tiền thanh toán hàng tháng",
+                                inputLabel: "Tiền điện trung bình mỗi tháng",
+                                unit: "VNĐ/tháng"
+                            }
+                        ]
+                    }
                 ]
             },
             {
@@ -94,7 +119,20 @@ const surveys = [
         ],
         calculate(formData) {
             let usedExternal = false;
-            const monthlyKwh = Number(formData.get("electricity_monthly_kwh")) || 0;
+            const enteredMonthlyKwh = Number(formData.get("electricity_monthly_kwh")) || 0;
+            const enteredElectricBill = Number(formData.get("electricity_electric_bill")) || 0;
+            const requestedBasis = String(formData.get("electricity_consumption_basis") || "");
+            const consumptionBasis = requestedBasis || (enteredElectricBill > 0 && enteredMonthlyKwh === 0 ? "bill" : "kwh");
+            const electricityPrice = pickScalar("electricity", "electricity_price_per_kwh", 3000);
+            const safeElectricityPrice = electricityPrice.value > 0 ? electricityPrice.value : 3000;
+            usedExternal = usedExternal || electricityPrice.source === "external";
+
+            const monthlyKwh = consumptionBasis === "bill"
+                ? enteredElectricBill / safeElectricityPrice
+                : enteredMonthlyKwh;
+            const estimatedMonthlyBill = consumptionBasis === "bill"
+                ? enteredElectricBill
+                : enteredMonthlyKwh * safeElectricityPrice;
             const energyScalar = pickScalar("electricity", "energy_per_kwh", 189.75);
             usedExternal = usedExternal || energyScalar.source === "external";
             const energyMi = monthlyKwh * 12 * energyScalar.value;
@@ -126,7 +164,20 @@ const surveys = [
             const total = energyMi + deviceTotal + gasMi;
 
             const breakdown = [
-                { label: "Điện năng sử dụng trong năm", value: energyMi.toFixed(1) }
+                {
+                    label: consumptionBasis === "bill"
+                        ? "Điện năng sử dụng trong năm (quy đổi từ tiền điện)"
+                        : "Điện năng sử dụng trong năm",
+                    value: energyMi.toFixed(1)
+                },
+                {
+                    label: "Mức điện bình quân dùng để tính",
+                    value: `${monthlyKwh.toFixed(1)} kWh/tháng`
+                },
+                {
+                    label: consumptionBasis === "bill" ? "Tiền điện đã nhập" : "Tiền điện ước tính",
+                    value: `${Math.round(estimatedMonthlyBill).toLocaleString("vi-VN")} VNĐ/tháng`
+                }
             ];
             if (gasMi > 0) {
                 breakdown.push({ label: "Ước tính gas sử dụng", value: gasMi.toFixed(1) });
@@ -402,6 +453,8 @@ const stepLabels = {
 };
 
 function setActiveStep(stepId) {
+    document.body.classList.toggle("profile-step", stepId === "step-profile");
+
     document.querySelectorAll(".wizard-step").forEach((step) => {
         step.classList.toggle("active", step.id === stepId);
     });
@@ -471,7 +524,6 @@ function renderHistory() {
                     <h4>${escapeHtml(entry.surveyName)}</h4>
                     <p>${escapeHtml(entry.fullname)} • ${escapeHtml(entry.location)}</p>
                     <p>${escapeHtml(entry.completedAtLabel)} • ${escapeHtml(entry.sourceLabel)}</p>
-                    <p>${escapeHtml(entry.dataSheetLabel || "Chưa có trạng thái lưu dữ liệu")}</p>
                 </div>
                 <strong>${escapeHtml(entry.total)} MI</strong>
             </article>
@@ -731,13 +783,25 @@ function showGroupError(group, message) {
 
 function validateForm(form) {
     let isValid = true;
-    const requiredFields = form.querySelectorAll("[required]");
+    let firstInvalidField = null;
+    const fields = form.querySelectorAll("input, select, textarea");
     const checkedNames = new Set();
 
-    requiredFields.forEach((field) => {
-        if (field.disabled) return;
+    const markInvalid = (field, message) => {
+        isValid = false;
+        if (!firstInvalidField) firstInvalidField = field;
+        showInlineError(field, message);
+    };
 
-        if (field.type === "radio") {
+    fields.forEach((field) => {
+        if (field.disabled) {
+            if (field.required) {
+                markInvalid(field, "Vui lòng hoàn tất lựa chọn phía trên trước.");
+            }
+            return;
+        }
+
+        if (field.type === "radio" && field.required) {
             if (checkedNames.has(field.name)) return;
             checkedNames.add(field.name);
 
@@ -750,17 +814,52 @@ function validateForm(form) {
 
             if (!checked) {
                 isValid = false;
+                if (!firstInvalidField) firstInvalidField = field;
                 if (group) showGroupError(group, "Vui lòng chọn một đáp án.");
             }
             return;
         }
 
+        if (field.type === "radio" || field.type === "checkbox") return;
+
         clearInlineError(field);
-        if (!String(field.value).trim()) {
-            isValid = false;
-            showInlineError(field, "Vui lòng điền trường này.");
+        const value = String(field.value).trim();
+        if (field.required && !value) {
+            markInvalid(field, "Vui lòng điền trường này.");
+            return;
+        }
+
+        if (field.type === "number" && value) {
+            const numberValue = Number(value);
+            const min = field.min === "" ? null : Number(field.min);
+            const max = field.max === "" ? null : Number(field.max);
+
+            if (!Number.isFinite(numberValue)) {
+                markInvalid(field, "Vui lòng nhập một số hợp lệ.");
+            } else if (min !== null && numberValue < min) {
+                markInvalid(field, `Giá trị nhỏ nhất là ${field.min}.`);
+            } else if (max !== null && numberValue > max) {
+                markInvalid(field, `Giá trị lớn nhất là ${field.max}.`);
+            } else if (field.step === "1" && !Number.isInteger(numberValue)) {
+                markInvalid(field, "Vui lòng nhập số nguyên.");
+            }
         }
     });
+
+    form.querySelectorAll('input[value="other"]:checked').forEach((otherOption) => {
+        const otherField = form.elements.namedItem(`${otherOption.name}_other`);
+        if (!(otherField instanceof HTMLInputElement)) return;
+
+        clearInlineError(otherField);
+        if (!otherField.value.trim()) {
+            markInvalid(otherField, "Vui lòng ghi rõ phương án khác.");
+        }
+    });
+
+    if (firstInvalidField) {
+        firstInvalidField.focus({ preventScroll: true });
+        firstInvalidField.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
 
     return isValid;
 }
@@ -800,10 +899,10 @@ function renderQuestion(question, surveyId) {
         html += `<div class="note-highlight">${question.note}</div>`;
     }
 
-    html += `<label>${question.label}</label>`;
+    html += `<label class="question-label">${question.label}</label>`;
 
     if (question.type === "number") {
-        html += `<input type="number" name="${namePrefix}" min="${question.min ?? 0}" ${question.required ? "required" : ""}>`;
+        html += `<input type="number" name="${namePrefix}" min="${question.min ?? 0}" step="${question.step ?? "any"}" inputmode="decimal" ${question.required ? "required" : ""}>`;
     } else if (question.type === "text") {
         html += `<input type="text" name="${namePrefix}" ${question.required ? "required" : ""}>`;
     } else if (question.type === "radio" || question.type === "radio-other") {
@@ -836,11 +935,58 @@ function renderQuestion(question, surveyId) {
                 <input type="text" name="${namePrefix}_other">
             </label>
         </div>`;
+    } else if (question.type === "electricity-choice") {
+        html += `
+            <div class="consumption-choice" data-consumption-choice>
+                <div class="consumption-choice-head">
+                    <span class="eco-mini-icon"><i class="fas fa-leaf"></i></span>
+                    <div>
+                        <strong>Chỉ cần nhập một thông tin</strong>
+                        <p>Hệ thống dùng mức giá quy đổi tham khảo 3.000 VNĐ/kWh và có thể cập nhật từ bảng hệ số MI.</p>
+                    </div>
+                </div>
+                <div class="consumption-tabs" role="radiogroup" aria-label="Cách nhập mức sử dụng điện">
+                    ${question.options.map((option, index) => `
+                        <label class="consumption-option ${index === 0 ? "active" : ""}">
+                            <input type="radio" name="electricity_consumption_basis" value="${option.value}" ${index === 0 ? "checked" : ""} required>
+                            <span class="consumption-option-icon"><i class="fas ${option.icon}"></i></span>
+                            <span>
+                                <strong>${option.title}</strong>
+                                <small>${option.description}</small>
+                            </span>
+                            <i class="fas fa-circle-check consumption-check"></i>
+                        </label>
+                    `).join("")}
+                </div>
+                <div class="consumption-panels">
+                    ${question.options.map((option, index) => `
+                        <div class="consumption-panel ${index === 0 ? "active" : ""}" data-consumption-panel="${option.value}">
+                            <label class="input-label" for="electricity_${option.inputId}">${option.inputLabel}</label>
+                            <div class="input-with-unit">
+                                <input
+                                    id="electricity_${option.inputId}"
+                                    type="number"
+                                    class="smart-number consumption-value"
+                                    name="electricity_${option.inputId}"
+                                    min="0"
+                                    step="any"
+                                    inputmode="decimal"
+                                    value="0"
+                                    ${index === 0 ? "required" : "disabled"}
+                                >
+                                <span>${option.unit}</span>
+                            </div>
+                            <p class="conversion-preview" data-conversion-preview></p>
+                        </div>
+                    `).join("")}
+                </div>
+            </div>
+        `;
     } else if (question.type === "grid") {
         html += `<div class="grid-container">${question.items.map((item) => `
             <div class="grid-row">
                 <span>${item.label}</span>
-                <input type="number" class="smart-number" name="${namePrefix}_${item.code}" min="0" value="0">
+                <input type="number" class="smart-number" name="${namePrefix}_${item.code}" min="0" step="any" inputmode="decimal" value="0">
             </div>
         `).join("")}</div>`;
     }
@@ -865,6 +1011,66 @@ function bindSmartNumberInputs(scope) {
     });
 }
 
+function bindElectricityChoice(scope) {
+    scope.querySelectorAll("[data-consumption-choice]").forEach((choice) => {
+        const radios = Array.from(choice.querySelectorAll('input[name="electricity_consumption_basis"]'));
+        const options = Array.from(choice.querySelectorAll(".consumption-option"));
+        const panels = Array.from(choice.querySelectorAll("[data-consumption-panel]"));
+
+        const updatePreview = (panel) => {
+            const input = panel.querySelector(".consumption-value");
+            const preview = panel.querySelector("[data-conversion-preview]");
+            if (!input || !preview) return;
+
+            const amount = Number(input.value) || 0;
+            const priceInfo = pickScalar("electricity", "electricity_price_per_kwh", 3000);
+            const pricePerKwh = priceInfo.value > 0 ? priceInfo.value : 3000;
+            const mode = panel.dataset.consumptionPanel;
+
+            if (amount <= 0) {
+                preview.textContent = mode === "bill"
+                    ? "Hệ thống sẽ quy đổi số tiền này sang kWh."
+                    : "Hệ thống sẽ ước tính tiền điện tương ứng.";
+                return;
+            }
+
+            preview.textContent = mode === "bill"
+                ? `Tương đương khoảng ${(amount / pricePerKwh).toFixed(1)} kWh/tháng`
+                : `Tiền điện ước tính khoảng ${Math.round(amount * pricePerKwh).toLocaleString("vi-VN")} VNĐ/tháng`;
+        };
+
+        const activateMode = (mode, shouldFocus = false) => {
+            options.forEach((option) => {
+                const radio = option.querySelector('input[type="radio"]');
+                option.classList.toggle("active", radio?.value === mode);
+            });
+
+            panels.forEach((panel) => {
+                const isActive = panel.dataset.consumptionPanel === mode;
+                const input = panel.querySelector(".consumption-value");
+                panel.classList.toggle("active", isActive);
+                if (input) {
+                    input.disabled = !isActive;
+                    input.required = isActive;
+                    if (isActive && shouldFocus) input.focus();
+                }
+                updatePreview(panel);
+            });
+        };
+
+        radios.forEach((radio) => {
+            radio.addEventListener("change", () => activateMode(radio.value, true));
+        });
+
+        panels.forEach((panel) => {
+            const input = panel.querySelector(".consumption-value");
+            if (input) input.addEventListener("input", () => updatePreview(panel));
+        });
+
+        activateMode(radios.find((radio) => radio.checked)?.value || "kwh");
+    });
+}
+
 function renderSurveyQuestions(survey) {
     const surveyTitle = document.getElementById("surveyTitle");
     const surveyMeta = document.getElementById("surveyMeta");
@@ -875,9 +1081,7 @@ function renderSurveyQuestions(survey) {
 
     surveyTitle.textContent = survey.name;
     surveyMeta.innerHTML = `
-        ${survey.description ? `<strong>Mô tả:</strong> ${survey.description}<br>` : ""}
-        <strong>Nguồn câu hỏi:</strong> Google Form khảo sát tiêu dùng hộ gia đình, đã được nhóm lại theo từng box hiển thị.<br>
-        <strong>Nguồn tính MI hiện tại:</strong> ${state.miSource.label}. ${state.miSource.detail}
+        ${survey.description ? `<strong>Mô tả:</strong> ${survey.description}` : ""}
     `;
 
     dynamicQuestions.innerHTML = survey.groups.map((group) => `
@@ -891,6 +1095,7 @@ function renderSurveyQuestions(survey) {
     `).join("");
 
     surveyForm.reset();
+    bindElectricityChoice(dynamicQuestions);
     bindSmartNumberInputs(dynamicQuestions);
 }
 
@@ -902,6 +1107,7 @@ function collectProfileData() {
         fullname: String(formData.get("fullname") || "").trim(),
         age: String(formData.get("age") || "").trim(),
         gender: String(formData.get("gender") || "").trim(),
+        household: String(formData.get("household") || "").trim(),
         province: String(formData.get("province") || "").trim(),
         district: String(formData.get("district") || "").trim(),
         ward: String(formData.get("ward") || "").trim()
@@ -911,6 +1117,13 @@ function collectProfileData() {
 function startSurvey(surveyId) {
     const survey = getSurveyById(surveyId);
     if (!survey) return;
+
+    const profileForm = document.getElementById("profileForm");
+    if (!state.profile) {
+        setActiveStep("step-profile");
+        if (profileForm) validateForm(profileForm);
+        return;
+    }
 
     state.selectedSurveyId = survey.id;
     state.selectedSurveyName = survey.name;
@@ -945,15 +1158,17 @@ function renderResult(result, survey) {
     const resultSurveyName = document.getElementById("resultSurveyName");
     const resultTotal = document.getElementById("resultTotal");
     const resultBreakdown = document.getElementById("resultBreakdown");
-    const sheetNotice = document.getElementById("sheetNotice");
-    const miSourceStatus = document.getElementById("miSourceStatus");
     const comparisonCard = document.getElementById("comparisonCard");
 
-    if (!resultLead || !resultSurveyName || !resultTotal || !resultBreakdown || !sheetNotice || !miSourceStatus || !comparisonCard) return;
+    if (!resultLead || !resultSurveyName || !resultTotal || !resultBreakdown || !comparisonCard) return;
 
-    resultLead.textContent = `${state.profile.fullname} đã hoàn thành ${survey.name}. Đây là kết quả MI ước tính cho khảo sát vừa chọn.`;
+    const participantName = state.profile?.fullname || "Bạn";
+    resultLead.textContent = `${participantName} đã hoàn thành ${survey.name}. Đây là kết quả MI ước tính cho khảo sát vừa chọn.`;
     resultSurveyName.textContent = survey.name;
-    resultTotal.textContent = result.total;
+    const numericTotal = Number(result.total);
+    resultTotal.textContent = Number.isFinite(numericTotal)
+        ? `${numericTotal.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} MI`
+        : "0 MI";
     resultBreakdown.innerHTML = result.breakdown.length
         ? result.breakdown.map((item) => `
             <div class="result-item">
@@ -962,12 +1177,6 @@ function renderResult(result, survey) {
             </div>
         `).join("")
         : '<div class="result-item"><span>Chưa có dữ liệu đủ để tính MI.</span><strong>0</strong></div>';
-
-    const isExternal = result.sourceMode === "external";
-    miSourceStatus.className = `source-status ${isExternal ? "external" : "fallback"}`;
-    miSourceStatus.textContent = isExternal
-        ? `Kết quả này đang dùng hệ số MI từ nguồn ngoài: ${state.miSource.label}.`
-        : `Kết quả này đang dùng ${state.miSource.label}.`;
 
     const comparison = getComparisonSummary(survey.id, Number(result.total));
     if (comparison.count > 0) {
@@ -995,13 +1204,6 @@ function renderResult(result, survey) {
             <p>Hiện chưa có đủ lịch sử trên thiết bị này để tạo trung bình so sánh. Sau khi bạn làm thêm các khảo sát trong phiên, mục này sẽ bắt đầu hiện số liệu đối chiếu.</p>
         `;
     }
-
-    sheetNotice.innerHTML = `
-        Nguồn sheet hiện tại: <a href="${SHEET_SOURCE_URL}" target="_blank" rel="noreferrer">Google Sheet MI</a>.
-        Endpoint ưu tiên: <a href="${MI_CONFIG_ENDPOINT}" target="_blank" rel="noreferrer">App Script / JSON</a>.
-        Dữ liệu khảo sát được gửi về Web App Google Apps Script để lưu vào tab <strong>survey_responses</strong>.
-        Lịch sử bên dưới chỉ hiển thị của chính bạn trên thiết bị này, không phải của người khác.
-    `;
 }
 
 function formDataToObject(formData) {
@@ -1052,8 +1254,10 @@ async function submitToGoogleScript(formData, result) {
             body: buildSubmissionPayload(formData, result),
             mode: "no-cors"
         });
+        return { configured: true, success: true };
     } catch (error) {
         console.error("Submit failed:", error);
+        return { configured: true, success: false };
     }
 }
 
@@ -1078,6 +1282,7 @@ async function submitToDataSheet(formData, result) {
 async function handleSurveySubmit(event) {
     event.preventDefault();
     const submitButton = document.getElementById("submitSurveyBtn");
+    const submitStatus = document.getElementById("surveySubmitStatus");
     const form = event.currentTarget;
 
     if (!validateForm(form)) return;
@@ -1088,11 +1293,28 @@ async function handleSurveySubmit(event) {
     const formData = new FormData(form);
     submitButton.disabled = true;
     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+    if (submitStatus) {
+        submitStatus.className = "submit-status";
+        submitStatus.textContent = "";
+    }
 
-    const result = survey.calculate(formData);
-    await submitToGoogleScript(formData, result);
-    const dataSheetStatus = await submitToDataSheet(formData, result);
-    renderResult(result, survey);
+    let result;
+    try {
+        result = survey.calculate(formData);
+        if (!result || !Number.isFinite(Number(result.total))) {
+            throw new Error("Invalid MI result");
+        }
+        renderResult(result, survey);
+    } catch (error) {
+        console.error("MI calculation failed:", error);
+        submitButton.disabled = false;
+        submitButton.innerHTML = 'Hoàn thành khảo sát <i class="fa fa-paper-plane"></i>';
+        if (submitStatus) {
+            submitStatus.className = "submit-status error";
+            submitStatus.textContent = "Không thể tính chỉ số MI. Vui lòng tải lại trang và thử lại.";
+        }
+        return;
+    }
 
     state.history.unshift({
         surveyId: survey.id,
@@ -1101,7 +1323,6 @@ async function handleSurveySubmit(event) {
         location: [state.profile?.ward, state.profile?.district, state.profile?.province].filter(Boolean).join(", "),
         total: result.total,
         sourceLabel: result.sourceMode === "external" ? state.miSource.label : "Bảng số liệu MI",
-        dataSheetLabel: !dataSheetStatus.configured ? "Chưa cấu hình sheet riêng" : dataSheetStatus.success ? "Đã gửi sheet dữ liệu" : "Lỗi gửi sheet dữ liệu",
         completedAt: new Date().toISOString(),
         completedAtLabel: new Date().toLocaleString("vi-VN")
     });
@@ -1112,6 +1333,13 @@ async function handleSurveySubmit(event) {
     submitButton.disabled = false;
     submitButton.innerHTML = 'Hoàn thành khảo sát <i class="fa fa-paper-plane"></i>';
     setActiveStep("step-result");
+
+    Promise.all([
+        submitToGoogleScript(formData, result),
+        submitToDataSheet(formData, result)
+    ]).catch((error) => {
+        console.error("Background sheet submit failed:", error);
+    });
 }
 
 async function loadAdministrativeData() {
@@ -1120,52 +1348,148 @@ async function loadAdministrativeData() {
     const wardSelect = document.getElementById("ward");
     if (!provinceSelect || !districtSelect || !wardSelect) return;
 
-    try {
-        const response = await fetch("https://provinces.open-api.vn/api/p/");
-        const provinces = await response.json();
-        provinceSelect.innerHTML = '<option value="">Chọn tỉnh / thành...</option>';
-        provinces.forEach((province) => {
-            provinceSelect.innerHTML += `<option value="${province.name}" data-code="${province.code}">${province.name}</option>`;
+    const apiProviders = [
+        {
+            id: "open-api",
+            provinceUrl: "https://provinces.open-api.vn/api/p/",
+            provinceDetailUrl: (code) => `https://provinces.open-api.vn/api/p/${code}?depth=2`,
+            districtDetailUrl: (code) => `https://provinces.open-api.vn/api/d/${code}?depth=2`,
+            normalizeProvinces: (data) => data.map((province) => ({
+                code: province.code,
+                name: province.name
+            })),
+            normalizeDistricts: (data) => (data.districts || []).map((district) => ({
+                code: district.code,
+                name: district.name
+            })),
+            normalizeWards: (data) => (data.wards || []).map((ward) => ({
+                code: ward.code || ward.name,
+                name: ward.name
+            }))
+        },
+        {
+            id: "esgoo",
+            provinceUrl: "https://esgoo.net/api-tinhthanh/1/0.htm",
+            provinceDetailUrl: (code) => `https://esgoo.net/api-tinhthanh/2/${code}.htm`,
+            districtDetailUrl: (code) => `https://esgoo.net/api-tinhthanh/3/${code}.htm`,
+            normalizeProvinces: (data) => (data.data || []).map((province) => ({
+                code: province.id,
+                name: province.full_name || province.name
+            })),
+            normalizeDistricts: (data) => (data.data || []).map((district) => ({
+                code: district.id,
+                name: district.full_name || district.name
+            })),
+            normalizeWards: (data) => (data.data || []).map((ward) => ({
+                code: ward.id,
+                name: ward.full_name || ward.name
+            }))
+        }
+    ];
+
+    async function fetchJsonWithTimeout(url, timeoutMs = 8000) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+        try {
+            const response = await fetch(url, { signal: controller.signal });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return await response.json();
+        } finally {
+            clearTimeout(timeoutId);
+        }
+    }
+
+    function setOptions(select, placeholder, items, sourceId = "") {
+        select.innerHTML = `<option value="">${placeholder}</option>`;
+        items.forEach((item) => {
+            const option = document.createElement("option");
+            option.value = item.name;
+            option.textContent = item.name;
+            option.dataset.code = item.code;
+            option.dataset.source = sourceId;
+            select.appendChild(option);
         });
+        select.disabled = false;
+    }
+
+    function setManualFallback() {
+        provinceSelect.innerHTML = '<option value="Không xác định">Không xác định</option>';
+        districtSelect.innerHTML = '<option value="Không xác định">Không xác định</option>';
+        wardSelect.innerHTML = '<option value="Không xác định">Không xác định</option>';
+        provinceSelect.disabled = false;
+        districtSelect.disabled = false;
+        wardSelect.disabled = false;
+    }
+
+    async function loadWithProviders(loader) {
+        for (const provider of apiProviders) {
+            try {
+                const items = await loader(provider);
+                if (items.length > 0) {
+                    return { provider, items };
+                }
+            } catch (error) {
+                continue;
+            }
+        }
+        return null;
+    }
+
+    try {
+        const result = await loadWithProviders(async (provider) => {
+            const data = await fetchJsonWithTimeout(provider.provinceUrl);
+            return provider.normalizeProvinces(data);
+        });
+        if (!result) throw new Error("No province data");
+        setOptions(provinceSelect, "Chọn tỉnh / thành...", result.items, result.provider.id);
     } catch (error) {
-        provinceSelect.innerHTML = '<option value="">Không tải được dữ liệu tỉnh / thành</option>';
+        setManualFallback();
     }
 
     provinceSelect.addEventListener("change", async function handleProvinceChange() {
         clearInlineError(this);
-        const code = this.options[this.selectedIndex]?.dataset.code;
+        const selectedOption = this.options[this.selectedIndex];
+        const code = selectedOption?.dataset.code;
+        const sourceId = selectedOption?.dataset.source;
+        const provider = apiProviders.find((item) => item.id === sourceId);
         districtSelect.innerHTML = '<option value="">Chọn quận / huyện...</option>';
-        districtSelect.disabled = !code;
+        districtSelect.disabled = !code || !provider;
         wardSelect.innerHTML = '<option value="">Chọn phường / xã...</option>';
         wardSelect.disabled = true;
-        if (!code) return;
+        if (!code || !provider) return;
 
         try {
-            const response = await fetch(`https://provinces.open-api.vn/api/p/${code}?depth=2`);
-            const provinceData = await response.json();
-            provinceData.districts.forEach((district) => {
-                districtSelect.innerHTML += `<option value="${district.name}" data-code="${district.code}">${district.name}</option>`;
-            });
+            const data = await fetchJsonWithTimeout(provider.provinceDetailUrl(code));
+            const districts = provider.normalizeDistricts(data);
+            if (!districts.length) throw new Error("No district data");
+            setOptions(districtSelect, "Chọn quận / huyện...", districts, provider.id);
         } catch (error) {
-            districtSelect.innerHTML = '<option value="">Không tải được quận / huyện</option>';
+            districtSelect.innerHTML = '<option value="Không xác định">Không xác định</option>';
+            districtSelect.disabled = false;
+            wardSelect.innerHTML = '<option value="Không xác định">Không xác định</option>';
+            wardSelect.disabled = false;
         }
     });
 
     districtSelect.addEventListener("change", async function handleDistrictChange() {
         clearInlineError(this);
-        const code = this.options[this.selectedIndex]?.dataset.code;
+        const selectedOption = this.options[this.selectedIndex];
+        const code = selectedOption?.dataset.code;
+        const sourceId = selectedOption?.dataset.source;
+        const provider = apiProviders.find((item) => item.id === sourceId);
         wardSelect.innerHTML = '<option value="">Chọn phường / xã...</option>';
-        wardSelect.disabled = !code;
-        if (!code) return;
+        wardSelect.disabled = !code || !provider;
+        if (!code || !provider) return;
 
         try {
-            const response = await fetch(`https://provinces.open-api.vn/api/d/${code}?depth=2`);
-            const districtData = await response.json();
-            districtData.wards.forEach((ward) => {
-                wardSelect.innerHTML += `<option value="${ward.name}">${ward.name}</option>`;
-            });
+            const data = await fetchJsonWithTimeout(provider.districtDetailUrl(code));
+            const wards = provider.normalizeWards(data);
+            if (!wards.length) throw new Error("No ward data");
+            setOptions(wardSelect, "Chọn phường / xã...", wards, provider.id);
         } catch (error) {
-            wardSelect.innerHTML = '<option value="">Không tải được phường / xã</option>';
+            wardSelect.innerHTML = '<option value="Không xác định">Không xác định</option>';
+            wardSelect.disabled = false;
         }
     });
 }
@@ -1181,11 +1505,13 @@ function bindEvents() {
     const clearHistoryBtn = document.getElementById("clearHistoryBtn");
     const stepNavItems = document.querySelectorAll(".step-nav-item");
 
-    toSurveySelector.addEventListener("click", () => {
+    const openSurveySelector = () => {
         if (!validateForm(profileForm)) return;
         state.profile = collectProfileData();
         setActiveStep("step-selector");
-    });
+    };
+
+    toSurveySelector.addEventListener("click", openSurveySelector);
 
     backToProfile.addEventListener("click", () => setActiveStep("step-profile"));
     backToSelector.addEventListener("click", () => setActiveStep("step-selector"));
@@ -1196,8 +1522,12 @@ function bindEvents() {
         item.addEventListener("click", () => {
             const target = item.dataset.stepTarget;
             if (!target) return;
-            if (target === "step-profile" || target === "step-selector") {
+            if (target === "step-profile") {
                 setActiveStep(target);
+                return;
+            }
+            if (target === "step-selector") {
+                openSurveySelector();
                 return;
             }
             if (target === "step-questionnaire" && state.selectedSurveyId) {
