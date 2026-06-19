@@ -11,85 +11,56 @@
 <body>
     <main class="app-shell">
         <section class="main-card">
-            <header class="app-topbar">
-                <div class="brand-mark">
-                    <span class="brand-icon"><i class="fa fa-leaf"></i></span>
-                    <div>
-                        <strong>Resource Calculator</strong>
-                        <small>NTTU Sustainable Consumption</small>
-                    </div>
-                </div>
-                <div class="institute-mark">NTTU</div>
-            </header>
-
-            <aside class="calculator-rail">
-                <div class="rail-brand">
-                    <p class="eyebrow">Your ecological backpack</p>
-                    <h1>Khảo sát tiêu dùng bền vững</h1>
-                    <p>
-                        Theo dõi các nhóm tiêu dùng chính và ước tính MI từ dữ liệu khảo sát của bạn.
-                    </p>
-                </div>
-
-                <div class="rail-progress">
-                    <p class="result-label">Tiến trình</p>
-                    <strong id="currentStepLabel">Bước 1 - Thông tin người tham gia</strong>
-                    <div class="progress-container compact">
-                        <div class="progress-bar" id="progress"></div>
-                    </div>
-                </div>
-
-                <nav class="step-nav horizontal" aria-label="Tiến trình khảo sát">
-                    <button type="button" class="step-nav-item active" data-step-target="step-profile">
-                        <span class="step-nav-number"><i class="fa fa-user"></i></span>
-                        <span class="step-nav-copy">
-                            <strong>Thông tin</strong>
-                            <small>Họ tên, độ tuổi, nơi ở</small>
-                        </span>
-                    </button>
-                    <button type="button" class="step-nav-item" data-step-target="step-selector">
-                        <span class="step-nav-number"><i class="fa fa-list-check"></i></span>
-                        <span class="step-nav-copy">
-                            <strong>Danh mục</strong>
-                            <small>Chọn khảo sát muốn làm</small>
-                        </span>
-                    </button>
-                    <button type="button" class="step-nav-item" data-step-target="step-questionnaire">
-                        <span class="step-nav-number"><i class="fa fa-pen"></i></span>
-                        <span class="step-nav-copy">
-                            <strong>Câu hỏi</strong>
-                            <small>Trả lời theo từng box</small>
-                        </span>
-                    </button>
-                    <button type="button" class="step-nav-item" data-step-target="step-result">
-                        <span class="step-nav-number"><i class="fa fa-scale-balanced"></i></span>
-                        <span class="step-nav-copy">
-                            <strong>Kết quả</strong>
-                            <small>MI và lịch sử</small>
-                        </span>
-                    </button>
-                </nav>
-
-                <div class="rail-metrics">
-                    <article class="metric-card">
-                        <span>03</span>
-                        <p>Khảo sát đang hoạt động</p>
-                    </article>
-                    <article class="metric-card">
-                        <span>MI</span>
-                        <p>Kết quả sau mỗi khảo sát</p>
-                    </article>
-                </div>
-            </aside>
-
             <div class="calculator-content full-width">
-                <div class="paper-corner"></div>
                 <header class="hero">
-                    <p class="eyebrow">Material Intensity Survey</p>
+                    <p class="eyebrow">NTTU Sustainable Consumption</p>
                     <h1>Khảo sát tiêu dùng bền vững</h1>
                     <p class="hero-copy">
                         Cung cấp thông tin để bắt đầu đánh giá mức độ tiêu dùng bền vững của bạn
                     </p>
+
+                    <div class="progress-stack">
+                        <div class="progress-stack-head">
+                            <div>
+                                <p class="result-label">Tiến trình</p>
+                                <strong id="currentStepLabel">Bước 1 - Thông tin người tham gia</strong>
+                            </div>
+                            <div class="progress-container compact">
+                                <div class="progress-bar" id="progress"></div>
+                            </div>
+                        </div>
+
+                        <nav class="step-nav horizontal" aria-label="Tiến trình khảo sát">
+                            <button type="button" class="step-nav-item active" data-step-target="step-profile">
+                                <span class="step-nav-number">01</span>
+                                <span class="step-nav-copy">
+                                    <strong>Thông tin</strong>
+                                    <small>Họ tên, độ tuổi, nơi ở</small>
+                                </span>
+                            </button>
+                            <button type="button" class="step-nav-item" data-step-target="step-selector">
+                                <span class="step-nav-number">02</span>
+                                <span class="step-nav-copy">
+                                    <strong>Danh mục</strong>
+                                    <small>Chọn khảo sát muốn làm</small>
+                                </span>
+                            </button>
+                            <button type="button" class="step-nav-item" data-step-target="step-questionnaire">
+                                <span class="step-nav-number">03</span>
+                                <span class="step-nav-copy">
+                                    <strong>Câu hỏi</strong>
+                                    <small>Trả lời theo từng box</small>
+                                </span>
+                            </button>
+                            <button type="button" class="step-nav-item" data-step-target="step-result">
+                                <span class="step-nav-number">04</span>
+                                <span class="step-nav-copy">
+                                    <strong>Kết quả</strong>
+                                    <small>MI và lịch sử</small>
+                                </span>
+                            </button>
+                        </nav>
+                    </div>
                 </header>
 
                 <section class="wizard-step active" id="step-profile">
@@ -119,12 +90,10 @@
                             </select>
                         </div>
                     </div>
-                    <!-- ===== THÊM TẠI ĐÂY (sau dòng gender) ===== -->
                     <div class="question-group">
                         <label for="household">Hộ gia đình có bao nhiêu thành viên?</label>
-                         <input id="household" type="number" name="household" min="1" value="1" required>
+                        <input id="household" type="number" name="household" min="1" value="1" required>
                     </div>
-<!-- ===== HẾT PHẦN THÊM ===== -->
 
                     <div class="question-group">
                         <label for="province">Tỉnh / Thành phố</label>
