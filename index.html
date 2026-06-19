@@ -7,7 +7,7 @@
     <title>Khảo sát Tiêu dùng Bền vững - NTTU</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20260619-3">
 </head>
 <body class="profile-step">
     <div class="eco-backdrop" aria-hidden="true">
@@ -202,6 +202,8 @@
                 <form id="surveyForm" novalidate>
                     <div id="dynamicQuestions"></div>
 
+                    <div id="surveySubmitStatus" class="submit-status" role="alert" aria-live="polite"></div>
+
                     <div class="button-group">
                         <button type="button" class="btn-prev" id="backToSelector">Chọn khảo sát khác</button>
                         <button type="submit" class="btn-next" id="submitSurveyBtn">
@@ -227,8 +229,8 @@
                         </div>
                         <div class="result-total">
                             <span>Tổng MI ước tính</span>
-                            <strong id="resultTotal">0</strong>
-                            <small>đơn vị quy đổi</small>
+                            <strong id="resultTotal">0 MI</strong>
+                            <small>đơn vị quy đổi Material Input</small>
                         </div>
                     </div>
                     <div id="resultBreakdown" class="result-breakdown"></div>
@@ -254,6 +256,6 @@
         </section>
     </main>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=20260619-3"></script>
 </body>
 </html>
