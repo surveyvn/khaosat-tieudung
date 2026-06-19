@@ -1,4 +1,4 @@
-const scriptURL = "https://script.google.com/macros/s/AKfycbwk-owgztg9rdMhvO6Wjr0UCTdKJKl83hiH0LhSinm-aFIDwmpcFW-hZkiQSORcGN9W/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbyHSXgSIO9pYBIQubS-_65CmrUzKIzJRBKpjRci1M3mLrbw0FZkbBJmcmonZ8bynAkMnQ/exec";
 const DATA_SCRIPT_URL = "";
 const SHEET_SOURCE_URL = "https://docs.google.com/spreadsheets/d/14Zo1oQT0--dw7L5OJ46OGVivvcxqFViqJzTMhkrrXXg/edit?usp=sharing";
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/14Zo1oQT0--dw7L5OJ46OGVivvcxqFViqJzTMhkrrXXg/export?format=csv";
@@ -1052,8 +1052,10 @@ async function submitToGoogleScript(formData, result) {
             body: buildSubmissionPayload(formData, result),
             mode: "no-cors"
         });
+        return { configured: true, success: true };
     } catch (error) {
         console.error("Submit failed:", error);
+        return { configured: true, success: false };
     }
 }
 
@@ -1090,7 +1092,7 @@ async function handleSurveySubmit(event) {
     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
 
     const result = survey.calculate(formData);
-    await submitToGoogleScript(formData, result);
+    const primarySheetStatus = await submitToGoogleScript(formData, result);
     const dataSheetStatus = await submitToDataSheet(formData, result);
     renderResult(result, survey);
 
@@ -1101,7 +1103,11 @@ async function handleSurveySubmit(event) {
         location: [state.profile?.ward, state.profile?.district, state.profile?.province].filter(Boolean).join(", "),
         total: result.total,
         sourceLabel: result.sourceMode === "external" ? state.miSource.label : "Bảng số liệu MI",
-        dataSheetLabel: !dataSheetStatus.configured ? "Chưa cấu hình sheet riêng" : dataSheetStatus.success ? "Đã gửi sheet dữ liệu" : "Lỗi gửi sheet dữ liệu",
+        dataSheetLabel: primarySheetStatus.success
+            ? "Đã gửi Google Sheet"
+            : dataSheetStatus.success
+                ? "Đã gửi sheet dữ liệu"
+                : "Lỗi gửi Google Sheet",
         completedAt: new Date().toISOString(),
         completedAtLabel: new Date().toLocaleString("vi-VN")
     });
