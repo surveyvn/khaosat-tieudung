@@ -382,8 +382,8 @@ const surveys = [
     },
     { id: "housing", name: "Khảo sát nhà ở", icon: "fa-house", description: "Sẽ cập nhật sau", available: false },
     { id: "water", name: "Khảo sát nước", icon: "fa-droplet", description: "Sẽ cập nhật sau", available: false },
-    { id: "transport", name: "Khảo sát giao thông", icon: "fa-bus", description: "Sẽ cập nhật sau", available: false },
-    { id: "waste", name: "Khảo sát rác thải", icon: "fa-recycle", description: "Sẽ cập nhật sau", available: false },
+    { id: "transport", name: "Khảo sát giao thông", icon: "fa-bus", description: "Sẽ cập nhật từ phần giao thông và du lịch trong Form.", available: false },
+    { id: "waste", name: "Khảo sát rác thải", icon: "fa-recycle", description: "Sẽ cập nhật sau.", available: false },
     { id: "lifestyle", name: "Khảo sát lối sống", icon: "fa-seedling", description: "Sẽ cập nhật sau.", available: false }
 ];
 
