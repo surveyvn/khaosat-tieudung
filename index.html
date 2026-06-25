@@ -7,7 +7,7 @@
     <title>Khảo sát Tiêu dùng Bền vững - NTTU</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260619-3">
+    <link rel="stylesheet" href="style.css?v=20260626-2">
 </head>
 <body class="profile-step">
     <div class="eco-backdrop" aria-hidden="true">
@@ -24,18 +24,18 @@
                             <div class="eco-brand">
                                 <span class="eco-brand-mark"><i class="fas fa-leaf"></i></span>
                                 <span>
-                                    <strong>EcoTrack</strong>
-                                    <small>NTTU Sustainable Living</small>
+                                    <strong>EcoImpact Tracker</strong>
+                                    <small>NTTU</small>
                                 </span>
                             </div>
                             <p class="eyebrow">Khảo sát • Đo lường • Thay đổi</p>
                             <h1>Hiểu dấu chân tiêu dùng,<br><span>sống xanh hơn mỗi ngày.</span></h1>
                             <p class="hero-copy">
-                                Đánh giá thói quen tiêu dùng của hộ gia đình bằng chỉ số MI,
+                                Đánh giá thói quen tiêu dùng của hộ gia đình bằng dấu chân vật chất,
                                 từ đó nhận diện những lựa chọn bền vững và thiết thực hơn.
                             </p>
                             <div class="hero-badges" aria-label="Đặc điểm dự án">
-                                <span><i class="fas fa-chart-line"></i> Đánh giá theo MI</span>
+                                <span><i class="fas fa-chart-line"></i> Tính theo TMR</span>
                                 <span><i class="fas fa-shield-heart"></i> Dữ liệu riêng tư</span>
                                 <span><i class="fas fa-seedling"></i> Hướng tới Net Zero</span>
                             </div>
@@ -47,7 +47,7 @@
                                 <i class="fas fa-earth-asia"></i>
                                 <span class="planet-leaf"><i class="fas fa-leaf"></i></span>
                             </div>
-                            <span class="eco-stat stat-one"><strong>MI</strong><small>Material Input</small></span>
+                            <span class="eco-stat stat-one"><strong>TMR</strong><small>kg/người/năm</small></span>
                             <span class="eco-stat stat-two"><i class="fas fa-arrow-trend-down"></i><small>Giảm tác động</small></span>
                         </div>
                     </div>
@@ -89,7 +89,7 @@
                                 <span class="step-nav-number">04</span>
                                 <span class="step-nav-copy">
                                     <strong>Kết quả</strong>
-                                    <small>MI và lịch sử</small>
+                                    <small>TMR và lịch sử</small>
                                 </span>
                             </button>
                         </nav>
@@ -170,7 +170,7 @@
 
                 <div class="info-banner">
                     Bạn có thể thực hiện từng khảo sát riêng lẻ. Sau khi hoàn thành một khảo sát,
-                    hệ thống sẽ tính MI và cho phép quay lại chọn khảo sát khác.
+                    hệ thống sẽ tính dấu chân vật chất và cho phép quay lại chọn khảo sát khác.
                 </div>
 
                 <section class="history-panel">
@@ -217,7 +217,7 @@
                 <div class="thank-you">
                     <i class="fas fa-check-circle thank-you-icon"></i>
                     <p class="eyebrow">Bước 4</p>
-                    <h2>Cảm ơn bạn đã hoàn thành khảo sát</h2>
+                    <h2>Bạn đã hoàn thành khảo sát.</h2>
                     <p id="resultLead"></p>
                 </div>
 
@@ -228,13 +228,17 @@
                             <h3 id="resultSurveyName"></h3>
                         </div>
                         <div class="result-total">
-                            <span>Tổng MI ước tính</span>
-                            <strong id="resultTotal">0 MI</strong>
-                            <small>đơn vị quy đổi Material Input</small>
+                            <span>Chỉ số tiêu dùng tài nguyên</span>
+                            <strong id="resultTotal">0 kg/người/năm</strong>
+                            <small>≈ 0 tấn/người/năm</small>
                         </div>
                     </div>
+                    <div class="resource-result-grid">
+                        <div class="resource-review-card" id="resultReviewCard"></div>
+                        <div class="resource-suggestions-card" id="resultSuggestionsCard"></div>
+                    </div>
                     <div id="resultBreakdown" class="result-breakdown"></div>
-                    <div class="comparison-card" id="comparisonCard"></div>
+                    <div class="comparison-card hidden" id="comparisonCard"></div>
                 </div>
 
                 <section class="history-panel compact">
@@ -256,6 +260,6 @@
         </section>
     </main>
 
-    <script src="script.js?v=20260619-3"></script>
+    <script src="script.js?v=20260626-2"></script>
 </body>
 </html>
