@@ -14,12 +14,138 @@ const state = {
     miConfig: {},
     miSource: {
         mode: "dataset",
-        label: "Bảng số liệu MI người dùng cung cấp",
-        detail: "Thiết bị dùng MI quy đổi theo tuổi thọ khi có đủ dữ liệu; máy giặt dùng TMR theo tuổi thọ vì ô MI tổng đang trống. Thực phẩm, điện, quần áo và giày dép dùng hệ số MI trong bảng."
+        label: "Bảng hệ số MIT/TMR người dùng cung cấp",
+        detail: "Hệ số MIT chỉ được dùng để nhân với lượng tiêu dùng, sau đó quy đổi thành TMR kg/người/năm."
     }
 };
 
 const deviceSessionId = getOrCreateSessionId();
+
+const tmrCategoryKeys = ["device", "food", "transport", "energy", "clothing", "entertainment", "other"];
+const materialComponents = ["abiotic", "biotic", "earth", "water", "air"];
+const categoryLabels = {
+    device: "Thiết bị điện",
+    food: "Thực phẩm",
+    transport: "Đi lại",
+    energy: "Điện, nước, gas",
+    clothing: "Quần áo, giày dép",
+    entertainment: "Giải trí",
+    other: "Khác"
+};
+
+const CONFIG = {
+    householdSizeDefault: 3,
+    includeDeviceUsePhase: false,
+    sustainabilityBenchmark: {
+        sustainableTargetKgPersonYear: null,
+        mediumThresholdKgPersonYear: null,
+        highThresholdKgPersonYear: null
+    }
+};
+
+const calculationConfig = {
+    includeDeviceUsePhase: CONFIG.includeDeviceUsePhase,
+    foodInputScope: "household",
+    transportInputScope: "person",
+    clothingInputScope: "household",
+    entertainmentInputScope: "person"
+};
+
+const sustainabilityBenchmark = CONFIG.sustainabilityBenchmark;
+
+const DEVICE_DATA = {
+    tv: {
+        label: "Tivi",
+        lifetimeYear: 6,
+        tmrLifetimeWithUse: 1350,
+        tmrLifetimeNoUse: 596.2
+    },
+    refrigerator: {
+        label: "Tủ lạnh",
+        lifetimeYear: 15,
+        tmrLifetimeWithUse: 3629,
+        tmrLifetimeNoUse: 1323.1
+    },
+    air_conditioner: {
+        label: "Máy lạnh",
+        lifetimeYear: 15,
+        tmrLifetimeWithUse: 5982,
+        tmrLifetimeNoUse: 2928.8
+    },
+    cellphone: {
+        label: "Điện thoại",
+        lifetimeYear: 6,
+        tmrLifetimeWithUse: 10.4,
+        tmrLifetimeNoUse: 6.17
+    },
+    laptop: {
+        label: "Laptop",
+        lifetimeYear: 5,
+        tmrLifetimeWithUse: 273,
+        tmrLifetimeNoUse: 245.4
+    },
+    microwave_oven: {
+        label: "Lò vi sóng",
+        lifetimeYear: 9,
+        tmrLifetimeWithUse: 340.1,
+        tmrLifetimeNoUse: 325.3
+    },
+    electric_stove_oven: {
+        label: "Bếp điện và lò nướng",
+        lifetimeYear: 19,
+        tmrLifetimeWithUse: 2164,
+        tmrLifetimeNoUse: 512.4
+    },
+    washing_machine: {
+        label: "Máy giặt",
+        lifetimeYear: 12.5,
+        tmrLifetimeWithUse: 1036,
+        tmrLifetimeNoUse: 1036
+    }
+};
+
+const FOOD_FACTORS = {
+    pork: { label: "Thịt heo", unit: "kg/week", mitAbiotic: 8, mitBiotic: 10, mitEarth: 2.8, mitWater: 240, mitAir: 2 },
+    beef: { label: "Thịt bò", unit: "kg/week", mitAbiotic: 12, mitBiotic: 31, mitEarth: 3, mitWater: 439, mitAir: 1 },
+    chicken: { label: "Thịt gà, vịt", unit: "kg/week", mitAbiotic: 7, mitBiotic: 4.6, mitEarth: 1, mitWater: 228, mitAir: 2 },
+    fish: { label: "Cá", unit: "kg/week", mitAbiotic: 3, mitBiotic: 4.7, mitEarth: 0, mitWater: 271, mitAir: 1 },
+    milk: { label: "Sữa", unit: "L/week", mitAbiotic: 1, mitBiotic: 3, mitEarth: 0, mitWater: 31, mitAir: 0 },
+    vegetable: { label: "Rau, củ", unit: "kg/week", mitAbiotic: 7, mitBiotic: 1, mitEarth: 23, mitWater: 974, mitAir: 4 },
+    rice: { label: "Gạo", unit: "kg/month", mitAbiotic: 0, mitBiotic: 1, mitEarth: 2, mitWater: 0, mitAir: 0 }
+};
+
+const TRANSPORT_FACTORS = {
+    car_ride_hailing: { label: "Ô tô, xe hơi công nghệ", unit: "km/week", mitAbiotic: 2.02, mitBiotic: 0, mitEarth: 0, mitWater: 20, mitAir: 0.19 },
+    motorcycle_ride_hailing: { label: "Xe máy, xe máy công nghệ", unit: "km/week", mitAbiotic: 1.54, mitBiotic: 0, mitEarth: 0, mitWater: 0.74, mitAir: 0.27 },
+    bus: { label: "Xe buýt", unit: "km/week", mitAbiotic: 0.32, mitBiotic: 0, mitEarth: 0, mitWater: 3.23, mitAir: 0.06 },
+    bicycle: { label: "Xe đạp", unit: "km/week", mitAbiotic: 0.38, mitBiotic: 0, mitEarth: 0, mitWater: 12.1, mitAir: 0.02 }
+};
+
+const ENERGY_FACTORS = {
+    electricity: { label: "Điện", unit: "kWh/month", mitAbiotic: 0.53, mitBiotic: 0, mitEarth: 0, mitWater: 189, mitAir: 0.22 },
+    water: { label: "Nước", unit: "m3/month", mitAbiotic: 0.03, mitBiotic: 0, mitEarth: 0, mitWater: 1.33, mitAir: 0.01 },
+    gas: { label: "Gas", unit: "bottle/month", mitAbiotic: 0.31, mitBiotic: 0, mitEarth: 0, mitWater: 1, mitAir: 0.8 }
+};
+
+const CLOTHING_FACTORS = {
+    clothes: { label: "Quần áo", unit: "item/year", tmrFactor: 1264.145 },
+    shoes: { label: "Giày dép", unit: "pair/year", tmrFactor: 449.9 }
+};
+
+const ENTERTAINMENT_FACTORS = {
+    watching_movie_pc_phone: { label: "Xem phim trên máy tính hoặc điện thoại", unit: "hour/week", mitAbiotic: 1, mitBiotic: 0, mitEarth: 0, mitWater: 0, mitAir: 0 },
+    playing_game_pc_phone: { label: "Chơi game trên máy tính hoặc điện thoại", unit: "hour/week", mitAbiotic: 1, mitBiotic: 0, mitEarth: 0, mitWater: 0, mitAir: 0 },
+    outdoor_activities: { label: "Hoạt động ngoài trời", unit: "hour/week", mitAbiotic: 1.4, mitBiotic: 0, mitEarth: 0, mitWater: 33, mitAir: 0 },
+    cinema_music_show: { label: "Đi xem phim, ca nhạc", unit: "hour/week", mitAbiotic: 3.77, mitBiotic: 0, mitEarth: 0, mitWater: 430.91, mitAir: 1.25 },
+    watching_tv: { label: "Xem tivi", unit: "hour/week", mitAbiotic: 1, mitBiotic: 0, mitEarth: 0, mitWater: 0, mitAir: 0 }
+};
+
+const RESOURCE_BENCHMARKS = {
+    sustainableKgPerPersonYear: 8000,
+    globalAverageKgPerPersonYear: 13200,
+    unit: "kg/người/năm",
+    sourceNote: "Mốc 8 tấn/người/năm dùng làm ngưỡng tiêu dùng bền vững tham khảo; mốc 13,2 tấn/người/năm dùng làm trung bình toàn cầu gần đây."
+};
 
 const surveys = [
     {
@@ -50,12 +176,19 @@ const surveys = [
                         options: ["Không sử dụng", "1 bình gas/tháng", "2 bình gas/tháng"],
                         otherLabel: "Khác",
                         required: true
+                    },
+                    {
+                        id: "monthly_water",
+                        label: "Lượng nước sinh hoạt trung bình mỗi tháng (m3/tháng)",
+                        type: "number",
+                        min: 0,
+                        step: "any"
                     }
                 ]
             },
             {
                 title: "Điện năng tiêu thụ",
-                description: "Chọn một trong hai cách nhập. Hệ thống sẽ tự quy đổi dữ liệu còn lại để tính MI.",
+                description: "Chọn một trong hai cách nhập. Hệ thống sẽ tự quy đổi dữ liệu còn lại để tính dấu chân vật chất.",
                 questions: [
                     {
                         id: "consumption_basis",
@@ -93,14 +226,14 @@ const surveys = [
                         label: "Số lượng thiết bị điện tử chính có trong hộ gia đình",
                         type: "grid",
                         items: [
-                            { code: "tv", label: "Tivi", factor: 9211.8 },
-                            { code: "fridge", label: "Tủ lạnh", factor: 1158.6 },
-                            { code: "aircon", label: "Máy lạnh (điều hòa)", factor: 28.8 },
-                            { code: "phone", label: "Điện thoại", factor: 8.4 },
-                            { code: "laptop", label: "Laptop", factor: 1384.5 },
-                            { code: "microwave", label: "Lò vi sóng", factor: 558.9 },
-                            { code: "stove", label: "Bếp điện và lò nướng", factor: 1131.8 },
-                            { code: "washer", label: "Máy giặt", factor: 82.9 }
+                            { code: "tv", dataKey: "tv", label: DEVICE_DATA.tv.label },
+                            { code: "fridge", dataKey: "refrigerator", label: DEVICE_DATA.refrigerator.label },
+                            { code: "aircon", dataKey: "air_conditioner", label: DEVICE_DATA.air_conditioner.label },
+                            { code: "phone", dataKey: "cellphone", label: DEVICE_DATA.cellphone.label },
+                            { code: "laptop", dataKey: "laptop", label: DEVICE_DATA.laptop.label },
+                            { code: "microwave", dataKey: "microwave_oven", label: DEVICE_DATA.microwave_oven.label },
+                            { code: "stove", dataKey: "electric_stove_oven", label: DEVICE_DATA.electric_stove_oven.label },
+                            { code: "washer", dataKey: "washing_machine", label: DEVICE_DATA.washing_machine.label }
                         ]
                     }
                 ]
@@ -133,64 +266,115 @@ const surveys = [
             const estimatedMonthlyBill = consumptionBasis === "bill"
                 ? enteredElectricBill
                 : enteredMonthlyKwh * safeElectricityPrice;
-            const energyScalar = pickScalar("electricity", "energy_per_kwh", 189.75);
-            usedExternal = usedExternal || energyScalar.source === "external";
-            const energyMi = monthlyKwh * 12 * energyScalar.value;
-
-            const devicesQuestion = this.groups.flatMap((group) => group.questions).find((question) => question.id === "devices");
-            const deviceDivisor = pickScalar("electricity", "device_divisor", 1);
-            const safeDeviceDivisor = deviceDivisor.value > 0 ? deviceDivisor.value : 1;
-            usedExternal = usedExternal || deviceDivisor.source === "external";
-            const deviceRows = devicesQuestion.items.map((item) => {
-                const quantity = Number(formData.get(`electricity_devices_${item.code}`)) || 0;
-                const factorInfo = pickFactor("electricity", item.code, item.factor);
-                usedExternal = usedExternal || factorInfo.source === "external";
-                return {
-                    label: item.label,
-                    value: ((quantity * factorInfo.value) / safeDeviceDivisor).toFixed(1)
-                };
-            }).filter((row) => Number(row.value) > 0);
-
-            const gasMultiplier = formData.get("electricity_gas_usage");
-            const gasOptions = {
-                "1 bình gas/tháng": { code: "gas_1_cylinder", fallback: 0 },
-                "2 bình gas/tháng": { code: "gas_2_cylinders", fallback: 0 }
-            };
-            const gasOption = gasOptions[gasMultiplier];
-            const gasFactor = gasOption ? pickFactor("electricity", gasOption.code, gasOption.fallback) : { value: 0, source: "fallback" };
-            usedExternal = usedExternal || gasFactor.source === "external";
-            const gasMi = gasFactor.value;
-            const deviceTotal = deviceRows.reduce((sum, row) => sum + Number(row.value), 0);
-            const total = energyMi + deviceTotal + gasMi;
-
-            const breakdown = [
-                {
+            const electricityKwhYear = monthlyKwh * 12;
+            const energyFactor = pickFirstMaterialFactor("electricity", ["electricity", "energy_per_kwh"], ENERGY_FACTORS.electricity);
+            usedExternal = usedExternal || energyFactor.source === "external";
+            const energyImpact = calculateMaterialImpact(electricityKwhYear, energyFactor);
+            const monthlyWater = Number(formData.get("electricity_monthly_water")) || 0;
+            const waterM3Year = monthlyWater * 12;
+            const waterFactor = pickFirstMaterialFactor("electricity", ["water", "water_m3"], ENERGY_FACTORS.water);
+            usedExternal = usedExternal || waterFactor.source === "external";
+            const waterImpact = calculateMaterialImpact(waterM3Year, waterFactor);
+            const energyRows = [
+                createTmrDetailRow({
                     label: consumptionBasis === "bill"
                         ? "Điện năng sử dụng trong năm (quy đổi từ tiền điện)"
                         : "Điện năng sử dụng trong năm",
-                    value: energyMi.toFixed(1)
-                },
+                    annualAmount: electricityKwhYear,
+                    unit: "kWh/năm",
+                    impact: energyImpact
+                }),
                 {
                     label: "Mức điện bình quân dùng để tính",
+                    annualAmount: monthlyKwh,
+                    unit: "kWh/tháng",
+                    tmr: 0,
+                    water: 0,
+                    air: 0,
                     value: `${monthlyKwh.toFixed(1)} kWh/tháng`
                 },
                 {
                     label: consumptionBasis === "bill" ? "Tiền điện đã nhập" : "Tiền điện ước tính",
+                    annualAmount: estimatedMonthlyBill,
+                    unit: "VNĐ/tháng",
+                    tmr: 0,
+                    water: 0,
+                    air: 0,
                     value: `${Math.round(estimatedMonthlyBill).toLocaleString("vi-VN")} VNĐ/tháng`
                 }
             ];
-            if (gasMi > 0) {
-                breakdown.push({ label: "Ước tính gas sử dụng", value: gasMi.toFixed(1) });
-            } else if (gasMultiplier && gasMultiplier !== "Không sử dụng") {
-                breakdown.push({ label: "Gas - chưa có hệ số trong bảng", value: "0.0" });
+            if (waterImpact.tmr > 0) {
+                energyRows.push(createTmrDetailRow({
+                    label: "Nước sinh hoạt trong năm",
+                    annualAmount: waterM3Year,
+                    unit: "m3/năm",
+                    impact: waterImpact
+                }));
             }
-            deviceRows.forEach((row) => breakdown.push({ label: `Thiết bị - ${row.label}`, value: row.value }));
 
-            return {
-                total: total.toFixed(1),
-                breakdown,
-                sourceMode: usedExternal ? "external" : "fallback"
+            const devicesQuestion = this.groups.flatMap((group) => group.questions).find((question) => question.id === "devices");
+            const deviceRows = devicesQuestion.items.map((item) => {
+                const quantity = Number(formData.get(`electricity_devices_${item.code}`)) || 0;
+                const deviceData = DEVICE_DATA[item.dataKey || item.code];
+                const factorInfo = pickDeviceMaterialFactor(item);
+                const lifetimeInfo = pickScalar("electricity", `${item.dataKey || item.code}_lifetime_years`, deviceData?.lifetimeYear || 1);
+                const safeLifetimeYears = lifetimeInfo.value > 0 ? lifetimeInfo.value : (deviceData?.lifetimeYear || 1);
+                const lifetimeImpact = calculateMaterialImpact(quantity, factorInfo);
+                const annualImpact = scaleMaterialImpact(lifetimeImpact, 1 / safeLifetimeYears);
+
+                usedExternal = usedExternal || factorInfo.source === "external" || lifetimeInfo.source === "external";
+                return createTmrDetailRow({
+                    label: `Thiết bị - ${item.label}`,
+                    annualAmount: quantity,
+                    unit: `thiết bị, phân bổ ${safeLifetimeYears} năm`,
+                    impact: annualImpact,
+                    note: calculationConfig.includeDeviceUsePhase
+                        ? "Đã cộng giai đoạn sử dụng thiết bị."
+                        : "Không cộng giai đoạn sử dụng để tránh trùng với điện năng."
+                });
+            }).filter((row) => row.tmr > 0);
+
+            const gasMultiplier = formData.get("electricity_gas_usage");
+            const gasOptions = {
+                "1 bình gas/tháng": { monthlyBottles: 1, code: "gas_1_cylinder", fallback: 0 },
+                "2 bình gas/tháng": { monthlyBottles: 2, code: "gas_2_cylinders", fallback: 0 }
             };
+            const gasOption = gasOptions[gasMultiplier];
+            const gasFactor = pickFirstMaterialFactor("electricity", ["gas", "gas_cylinder"], ENERGY_FACTORS.gas);
+            let gasBottleYear = gasOption ? gasOption.monthlyBottles * 12 : 0;
+            usedExternal = usedExternal || gasFactor.source === "external";
+            const gasImpact = calculateMaterialImpact(gasBottleYear, gasFactor);
+
+            if (gasImpact.tmr > 0) {
+                energyRows.push(createTmrDetailRow({
+                    label: "Gas sử dụng trong năm",
+                    annualAmount: gasBottleYear,
+                    unit: "bình/năm",
+                    impact: gasImpact
+                }));
+            } else if (gasMultiplier && gasMultiplier !== "Không sử dụng") {
+                energyRows.push({
+                    label: "Gas - chưa có hệ số trong bảng",
+                    annualAmount: gasBottleYear,
+                    unit: "bình/năm",
+                    tmr: 0,
+                    water: 0,
+                    air: 0,
+                    value: "0 kg/năm"
+                });
+            }
+
+            return buildTmrResult({
+                byCategory: {
+                    device: sumDetailTmr(deviceRows),
+                    energy: sumDetailTmr(energyRows)
+                },
+                detail: {
+                    device: deviceRows,
+                    energy: energyRows
+                },
+                sourceMode: usedExternal ? "external" : "fallback"
+            });
         }
     },
     {
@@ -232,13 +416,13 @@ const surveys = [
                         label: "Khối lượng thực phẩm tiêu thụ trung bình mỗi tuần",
                         type: "grid",
                         items: [
-                            { code: "pork", label: "Thịt heo (kg/tuần)", factor: 2697 },
-                            { code: "beef", label: "Thịt bò (kg/tuần)", factor: 3325.19 },
-                            { code: "chicken", label: "Thịt gà, vịt (kg/tuần)", factor: 1390.3 },
-                            { code: "milk", label: "Sữa (kg/tuần)", factor: 309.504 },
-                            { code: "fish", label: "Cá (kg/tuần)", factor: 427.5 },
-                            { code: "vegetable", label: "Rau, củ (kg/tuần)", factor: 1022.1245 },
-                            { code: "rice", label: "Gạo (kg/tuần)", factor: 2.85 }
+                            { code: "pork", label: "Thịt heo (kg/tuần)" },
+                            { code: "beef", label: "Thịt bò (kg/tuần)" },
+                            { code: "chicken", label: "Thịt gà, vịt (kg/tuần)" },
+                            { code: "milk", label: "Sữa (L/tuần)" },
+                            { code: "fish", label: "Cá (kg/tuần)" },
+                            { code: "vegetable", label: "Rau, củ (kg/tuần)" },
+                            { code: "rice", label: "Gạo (kg/tháng)" }
                         ]
                     }
                 ]
@@ -313,56 +497,93 @@ const surveys = [
             const weeklyQuestion = this.groups.flatMap((group) => group.questions).find((question) => question.id === "weekly_food");
             const weeklyRows = weeklyQuestion.items.map((item) => {
                 const amount = Number(formData.get(`food_weekly_food_${item.code}`)) || 0;
-                const factorInfo = pickFactor("food", item.code, item.factor);
+                const fallbackFactor = FOOD_FACTORS[item.code] || 0;
+                const annualAmount = calculateAnnualAmount(amount, fallbackFactor.unit);
+                const factorInfo = pickMaterialFactor("food", item.code, fallbackFactor);
+                const impact = calculateMaterialImpact(annualAmount, factorInfo);
                 usedExternal = usedExternal || factorInfo.source === "external";
-                return {
+                return createTmrDetailRow({
                     label: item.label,
-                    value: (amount * 52 * factorInfo.value).toFixed(1)
-                };
-            }).filter((row) => Number(row.value) > 0);
+                    annualAmount,
+                    unit: fallbackFactor.unit?.includes("month") ? "kg/năm" : item.code === "milk" ? "L/năm" : "kg/năm",
+                    impact
+                });
+            }).filter((row) => row.tmr > 0);
 
             const eatoutQuestion = this.groups.flatMap((group) => group.questions).find((question) => question.id === "eatout_choices");
             const eatoutRows = eatoutQuestion.items.map((item) => {
                 const times = Number(formData.get(`food_eatout_choices_${item.code}`)) || 0;
-                const factorInfo = pickFactor("food", `eatout_${item.code}`, item.factor);
+                const annualTimes = times * 52;
+                const factorInfo = pickMaterialFactor("food", `eatout_${item.code}`, item.factor);
+                const impact = calculateMaterialImpact(annualTimes, factorInfo);
                 usedExternal = usedExternal || factorInfo.source === "external";
-                return {
-                    label: item.label,
-                    value: (times * 52 * factorInfo.value).toFixed(1)
-                };
-            }).filter((row) => Number(row.value) > 0);
+                return createTmrDetailRow({
+                    label: `Ăn ngoài - ${item.label}`,
+                    annualAmount: annualTimes,
+                    unit: "lần/năm",
+                    impact
+                });
+            }).filter((row) => row.tmr > 0);
 
             const deliveryTimes = formData.get("food_delivery_times");
             const deliveryOptions = {
-                "1-2 lần/tuần": { code: "delivery_1_2", fallback: 0 },
-                "3-4 lần/tuần": { code: "delivery_3_4", fallback: 0 },
-                "5-6 lần/tuần": { code: "delivery_5_6", fallback: 0 },
-                "hơn 6 lần/tuần": { code: "delivery_more_6", fallback: 0 }
+                "1-2 lần/tuần": { weeklyTimes: 1.5, code: "delivery_1_2", fallback: 0 },
+                "3-4 lần/tuần": { weeklyTimes: 3.5, code: "delivery_3_4", fallback: 0 },
+                "5-6 lần/tuần": { weeklyTimes: 5.5, code: "delivery_5_6", fallback: 0 },
+                "hơn 6 lần/tuần": { weeklyTimes: 7, code: "delivery_more_6", fallback: 0 }
             };
             const deliveryOption = deliveryOptions[deliveryTimes];
-            const deliveryFactor = deliveryOption ? pickFactor("food", deliveryOption.code, deliveryOption.fallback) : { value: 0, source: "fallback" };
+            let deliveryFactor = pickMaterialFactor("food", "delivery_order", 0);
+            if (!hasMaterialFactor(deliveryFactor) && deliveryOption) {
+                deliveryFactor = pickMaterialFactor("food", deliveryOption.code, deliveryOption.fallback);
+            }
             usedExternal = usedExternal || deliveryFactor.source === "external";
-            const deliveryMi = deliveryFactor.value;
-            const total = weeklyRows.reduce((sum, row) => sum + Number(row.value), 0) + eatoutRows.reduce((sum, row) => sum + Number(row.value), 0) + deliveryMi;
+            const deliveryAnnualTimes = deliveryOption ? deliveryOption.weeklyTimes * 52 : 0;
+            const deliveryImpact = calculateMaterialImpact(deliveryAnnualTimes, deliveryFactor);
 
             const breakdown = [...weeklyRows];
-            if (deliveryMi > 0) {
-                breakdown.push({ label: "Đặt đồ ăn online", value: deliveryMi.toFixed(1) });
+            if (deliveryImpact.tmr > 0) {
+                breakdown.push(createTmrDetailRow({
+                    label: "Đặt đồ ăn online",
+                    annualAmount: deliveryAnnualTimes,
+                    unit: "lần/năm",
+                    impact: deliveryImpact
+                }));
             }
-            eatoutRows.forEach((row) => breakdown.push({ label: `Ăn ngoài - ${row.label}`, value: row.value }));
-            if (deliveryTimes && deliveryMi === 0) {
-                breakdown.push({ label: "Đặt đồ ăn online - chưa có hệ số trong bảng", value: "0.0" });
+            eatoutRows.forEach((row) => breakdown.push(row));
+            if (deliveryTimes && deliveryImpact.tmr === 0) {
+                breakdown.push({
+                    label: "Đặt đồ ăn online - chưa có hệ số trong bảng",
+                    annualAmount: deliveryAnnualTimes,
+                    unit: "lần/năm",
+                    tmr: 0,
+                    water: 0,
+                    air: 0,
+                    value: "0 kg/năm"
+                });
             }
             const hasEatoutChoices = eatoutQuestion.items.some((item) => Number(formData.get(`food_eatout_choices_${item.code}`)) > 0);
             if (hasEatoutChoices && eatoutRows.length === 0) {
-                breakdown.push({ label: "Ăn ngoài - bảng chưa có hệ số theo mỗi lần ăn", value: "0.0" });
+                breakdown.push({
+                    label: "Ăn ngoài - bảng chưa có hệ số theo mỗi lần ăn",
+                    annualAmount: 0,
+                    unit: "lần/năm",
+                    tmr: 0,
+                    water: 0,
+                    air: 0,
+                    value: "0 kg/năm"
+                });
             }
 
-            return {
-                total: total.toFixed(1),
-                breakdown,
+            return buildTmrResult({
+                byCategory: {
+                    food: convertInputTmrToHouseholdYear("food", sumDetailTmr(breakdown), calculationConfig.foodInputScope)
+                },
+                detail: {
+                    food: breakdown
+                },
                 sourceMode: usedExternal ? "external" : "fallback"
-            };
+            });
         }
     },
     {
@@ -376,11 +597,11 @@ const surveys = [
                 questions: [
                     {
                         id: "annual_purchase",
-                        label: "Khối lượng mua sắm trung bình mỗi năm của hộ gia đình",
+                        label: "Số lượng mua sắm trung bình mỗi năm của hộ gia đình",
                         type: "grid",
                         items: [
-                            { code: "clothes", label: "Quần, áo (kg/năm)", factor: 1264.145 },
-                            { code: "shoes", label: "Giày, dép (kg/năm)", factor: 449.9 }
+                            { code: "clothes", label: "Quần, áo (cái/năm)" },
+                            { code: "shoes", label: "Giày, dép (đôi/năm)" }
                         ]
                     }
                 ]
@@ -409,31 +630,152 @@ const surveys = [
             const purchaseQuestion = this.groups.flatMap((group) => group.questions).find((question) => question.id === "annual_purchase");
             const breakdown = purchaseQuestion.items.map((item) => {
                 const amount = Number(formData.get(`fashion_annual_purchase_${item.code}`)) || 0;
-                const factorInfo = pickFactor("fashion", item.code, item.factor);
+                const fallbackFactor = CLOTHING_FACTORS[item.code] || 0;
+                const factorInfo = pickMaterialFactor("fashion", item.code, fallbackFactor);
+                const impact = calculateMaterialImpact(amount, factorInfo);
                 usedExternal = usedExternal || factorInfo.source === "external";
-                return {
+                return createTmrDetailRow({
                     label: item.label,
-                    value: (amount * factorInfo.value).toFixed(1)
-                };
-            }).filter((row) => Number(row.value) > 0);
+                    annualAmount: amount,
+                    unit: fallbackFactor.unit === "pair/year" ? "đôi/năm" : "cái/năm",
+                    impact
+                });
+            }).filter((row) => row.tmr > 0);
 
             const usedText = String(formData.get("fashion_used_items") || "").toLowerCase();
-            const total = breakdown.reduce((sum, row) => sum + Number(row.value), 0);
 
             if (usedText.includes("cũ") || usedText.includes("second")) {
-                breakdown.push({ label: "Đồ cũ - bảng chưa có hệ số điều chỉnh", value: "0.0" });
+                breakdown.push({
+                    label: "Đồ cũ - bảng chưa có hệ số điều chỉnh",
+                    annualAmount: 0,
+                    unit: "kg/năm",
+                    tmr: 0,
+                    water: 0,
+                    air: 0,
+                    value: "0 kg/năm"
+                });
             }
 
-            return {
-                total: total.toFixed(1),
-                breakdown,
+            return buildTmrResult({
+                byCategory: {
+                    clothing: convertInputTmrToHouseholdYear("clothing", sumDetailTmr(breakdown), calculationConfig.clothingInputScope)
+                },
+                detail: {
+                    clothing: breakdown
+                },
                 sourceMode: usedExternal ? "external" : "fallback"
-            };
+            });
         }
     },
     { id: "housing", name: "Khảo sát nhà ở", icon: "fa-house", description: "Sẽ cập nhật từ phần nhà ở trong Form.", available: false },
-    { id: "water", name: "Khảo sát nước", icon: "fa-droplet", description: "Sẽ cập nhật từ phần tiêu thụ nước trong Form.", available: false },
-    { id: "transport", name: "Khảo sát giao thông", icon: "fa-bus", description: "Sẽ cập nhật từ phần giao thông và du lịch trong Form.", available: false },
+    { id: "water", name: "Khảo sát nước", icon: "fa-droplet", description: "Đã được tính trong nhóm Điện, nước, gas khi làm khảo sát điện.", available: false },
+    {
+        id: "transport",
+        name: "Khảo sát giao thông",
+        icon: "fa-bus",
+        description: "Nhập quãng đường di chuyển trung bình mỗi tuần để quy đổi thành dấu chân vật chất hằng năm.",
+        available: true,
+        groups: [
+            {
+                title: "Quãng đường di chuyển hằng tuần",
+                questions: [
+                    {
+                        id: "weekly_km",
+                        label: "Số km trung bình mỗi tuần",
+                        type: "grid",
+                        items: [
+                            { code: "car_ride_hailing", label: "Ô tô, xe hơi công nghệ (km/tuần)" },
+                            { code: "motorcycle_ride_hailing", label: "Xe máy, xe máy công nghệ (km/tuần)" },
+                            { code: "bus", label: "Xe buýt (km/tuần)" },
+                            { code: "bicycle", label: "Xe đạp (km/tuần)" }
+                        ]
+                    }
+                ]
+            }
+        ],
+        calculate(formData) {
+            let usedExternal = false;
+            const kmQuestion = this.groups.flatMap((group) => group.questions).find((question) => question.id === "weekly_km");
+            const rows = kmQuestion.items.map((item) => {
+                const amount = Number(formData.get(`transport_weekly_km_${item.code}`)) || 0;
+                const fallbackFactor = TRANSPORT_FACTORS[item.code] || 0;
+                const annualAmount = calculateAnnualAmount(amount, fallbackFactor.unit);
+                const factorInfo = pickMaterialFactor("transport", item.code, fallbackFactor);
+                const impact = calculateMaterialImpact(annualAmount, factorInfo);
+                usedExternal = usedExternal || factorInfo.source === "external";
+                return createTmrDetailRow({
+                    label: item.label,
+                    annualAmount,
+                    unit: "km/năm",
+                    impact
+                });
+            }).filter((row) => row.tmr > 0);
+
+            return buildTmrResult({
+                byCategory: {
+                    transport: convertInputTmrToHouseholdYear("transport", sumDetailTmr(rows), calculationConfig.transportInputScope)
+                },
+                detail: {
+                    transport: rows
+                },
+                sourceMode: usedExternal ? "external" : "fallback"
+            });
+        }
+    },
+    {
+        id: "entertainment",
+        name: "Khảo sát giải trí",
+        icon: "fa-film",
+        description: "Nhập thời lượng giải trí trung bình mỗi tuần để quy đổi thành kg/người/năm.",
+        available: true,
+        groups: [
+            {
+                title: "Hoạt động giải trí hằng tuần",
+                questions: [
+                    {
+                        id: "weekly_hours",
+                        label: "Số giờ trung bình mỗi tuần",
+                        type: "grid",
+                        items: [
+                            { code: "watching_movie_pc_phone", label: "Xem phim trên máy tính hoặc điện thoại (giờ/tuần)" },
+                            { code: "playing_game_pc_phone", label: "Chơi game trên máy tính hoặc điện thoại (giờ/tuần)" },
+                            { code: "outdoor_activities", label: "Hoạt động ngoài trời (giờ/tuần)" },
+                            { code: "cinema_music_show", label: "Đi xem phim, ca nhạc (giờ/tuần)" },
+                            { code: "watching_tv", label: "Xem tivi (giờ/tuần)" }
+                        ]
+                    }
+                ]
+            }
+        ],
+        calculate(formData) {
+            let usedExternal = false;
+            const hourQuestion = this.groups.flatMap((group) => group.questions).find((question) => question.id === "weekly_hours");
+            const rows = hourQuestion.items.map((item) => {
+                const amount = Number(formData.get(`entertainment_weekly_hours_${item.code}`)) || 0;
+                const fallbackFactor = ENTERTAINMENT_FACTORS[item.code] || 0;
+                const annualAmount = calculateAnnualAmount(amount, fallbackFactor.unit);
+                const factorInfo = pickMaterialFactor("entertainment", item.code, fallbackFactor);
+                const impact = calculateMaterialImpact(annualAmount, factorInfo);
+                usedExternal = usedExternal || factorInfo.source === "external";
+                return createTmrDetailRow({
+                    label: item.label,
+                    annualAmount,
+                    unit: "giờ/năm",
+                    impact
+                });
+            }).filter((row) => row.tmr > 0);
+
+            return buildTmrResult({
+                byCategory: {
+                    entertainment: convertInputTmrToHouseholdYear("entertainment", sumDetailTmr(rows), calculationConfig.entertainmentInputScope)
+                },
+                detail: {
+                    entertainment: rows
+                },
+                sourceMode: usedExternal ? "external" : "fallback"
+            });
+        }
+    },
     { id: "waste", name: "Khảo sát rác thải", icon: "fa-recycle", description: "Sẽ cập nhật sau.", available: false },
     { id: "lifestyle", name: "Khảo sát lối sống", icon: "fa-seedling", description: "Sẽ cập nhật sau.", available: false }
 ];
@@ -488,6 +830,468 @@ function escapeHtml(value) {
         .replaceAll("'", "&#39;");
 }
 
+function createEmptyCategoryTotals() {
+    return tmrCategoryKeys.reduce((totals, key) => {
+        totals[key] = 0;
+        return totals;
+    }, {});
+}
+
+function createEmptyDetail() {
+    return tmrCategoryKeys.reduce((detail, key) => {
+        detail[key] = [];
+        return detail;
+    }, {});
+}
+
+function parseOptionalNumber(value) {
+    if (value === null || value === undefined || String(value).trim() === "") return null;
+    const parsed = parseConfigNumber(value);
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
+function toFiniteNumber(value, fallbackValue = 0) {
+    const parsed = parseOptionalNumber(value);
+    return parsed === null ? fallbackValue : parsed;
+}
+
+function formatNumber(value, maximumFractionDigits = 1) {
+    const numericValue = Number(value);
+    if (!Number.isFinite(numericValue)) return "0";
+    return numericValue.toLocaleString("vi-VN", { maximumFractionDigits });
+}
+
+function formatKg(value) {
+    return `${formatNumber(value)} kg`;
+}
+
+function formatKgPerPersonYear(value) {
+    return `${formatKg(value)}/người/năm`;
+}
+
+function calculateAnnualAmount(amountInput, unit = "") {
+    const amount = Number(amountInput) || 0;
+    const normalizedUnit = String(unit).toLowerCase();
+
+    if (normalizedUnit.includes("week")) return amount * 52;
+    if (normalizedUnit.includes("month")) return amount * 12;
+    return amount;
+}
+
+function calculateMI(amount, factor) {
+    return amount * factor;
+}
+
+function calculateTMR(miAbiotic, miBiotic, miEarth) {
+    return miAbiotic + miBiotic + miEarth;
+}
+
+function calculatePerPersonYear(tmrHouseholdYear, householdSize) {
+    const safeHouseholdSize = Number.isFinite(Number(householdSize)) && Number(householdSize) > 0
+        ? Number(householdSize)
+        : CONFIG.householdSizeDefault;
+    return tmrHouseholdYear / safeHouseholdSize;
+}
+
+function getHouseholdSize() {
+    return Number.isFinite(Number(state.profile?.household)) && Number(state.profile?.household) > 0
+        ? Number(state.profile.household)
+        : CONFIG.householdSizeDefault;
+}
+
+function getCategoryInputScope(category) {
+    const scopeMap = {
+        food: calculationConfig.foodInputScope,
+        transport: calculationConfig.transportInputScope,
+        clothing: calculationConfig.clothingInputScope,
+        entertainment: calculationConfig.entertainmentInputScope
+    };
+    return scopeMap[category] || "household";
+}
+
+function convertInputTmrToHouseholdYear(category, inputTmrYear, inputScope = getCategoryInputScope(category)) {
+    const tmrYear = Number(inputTmrYear) || 0;
+    return inputScope === "person" ? tmrYear * getHouseholdSize() : tmrYear;
+}
+
+function getMaterialComponentAliases(component) {
+    const aliases = {
+        abiotic: ["abiotic", "mitAbiotic", "miAbiotic", "mit_abiotic", "mi_abiotic", "abiotic_mi", "abiotic_factor", "vo_sinh", "vô sinh", "phi_sinh_hoc"],
+        biotic: ["biotic", "mitBiotic", "miBiotic", "mit_biotic", "mi_biotic", "biotic_mi", "biotic_factor", "huu_sinh", "hữu sinh", "sinh_hoc"],
+        earth: ["earth", "mitEarth", "miEarth", "mit_earth", "mi_earth", "earth_mi", "earth_factor", "soil", "dat", "đất", "earth_movement"],
+        water: ["water", "mitWater", "miWater", "mit_water", "mi_water", "water_mi", "water_factor", "nuoc", "nước"],
+        air: ["air", "mitAir", "miAir", "mit_air", "mi_air", "air_mi", "air_factor", "khong_khi", "không khí"]
+    };
+    return aliases[component] || [component];
+}
+
+function normalizeMaterialComponentName(value) {
+    const normalized = normalizeConfigHeader(value);
+    const aliases = {
+        abiotic: ["abiotic", "mitabiotic", "miabiotic", "vosinh", "phisinhhoc"],
+        biotic: ["biotic", "mitbiotic", "mibiotic", "huusinh", "sinhhoc"],
+        earth: ["earth", "mitearth", "miearth", "soil", "dat", "earthmovement"],
+        water: ["water", "mitwater", "miwater", "nuoc"],
+        air: ["air", "mitair", "miair", "khongkhi"]
+    };
+
+    return materialComponents.find((component) => aliases[component].includes(normalized)) || "";
+}
+
+function normalizeMaterialFactor(entry, fallbackValue = 0, source = "fallback") {
+    const components = materialComponents.reduce((acc, component) => {
+        acc[component] = 0;
+        return acc;
+    }, {});
+    let hasComponentValue = false;
+
+    if (typeof entry === "number" && Number.isFinite(entry)) {
+        components.abiotic = entry;
+        hasComponentValue = true;
+    } else if (entry && typeof entry === "object") {
+        materialComponents.forEach((component) => {
+            const componentValue = parseOptionalNumber(readConfigValue(entry, getMaterialComponentAliases(component)));
+            if (componentValue !== null) {
+                components[component] = componentValue;
+                hasComponentValue = true;
+            }
+        });
+
+        const scalarValue = parseOptionalNumber(readConfigValue(entry, [
+            "value",
+            "gia_tri",
+            "giá trị",
+            "he_so",
+            "hệ số",
+            "factor",
+            "tmrFactor",
+            "tmr_factor",
+            "mi",
+            "mit",
+            "tmr",
+            "total_tmr"
+        ]));
+        if (!hasComponentValue && scalarValue !== null) {
+            components.abiotic = scalarValue;
+            hasComponentValue = true;
+        }
+    }
+
+    if (!hasComponentValue) {
+        components.abiotic = Number(fallbackValue) || 0;
+    }
+
+    return {
+        components,
+        tmrFactor: calculateTMR(components.abiotic, components.biotic, components.earth),
+        waterFactor: components.water,
+        airFactor: components.air,
+        source
+    };
+}
+
+function hasMaterialFactor(factorInfo) {
+    return Boolean(factorInfo) && Math.abs(Number(factorInfo.tmrFactor) || 0) > 0;
+}
+
+function pickMaterialFactor(surveyId, code, fallbackValue = 0) {
+    const externalFactor = getExternalFactor(surveyId, code);
+    if (externalFactor !== undefined) {
+        return normalizeMaterialFactor(externalFactor, fallbackValue, "external");
+    }
+
+    const externalScalar = getExternalScalar(surveyId, code);
+    if (externalScalar !== undefined) {
+        return normalizeMaterialFactor(externalScalar, fallbackValue, "external");
+    }
+
+    return normalizeMaterialFactor(fallbackValue, fallbackValue, "fallback");
+}
+
+function pickFirstMaterialFactor(surveyId, codes, fallbackValue = 0) {
+    for (const code of codes) {
+        const externalFactor = getExternalFactor(surveyId, code);
+        if (externalFactor !== undefined) {
+            return normalizeMaterialFactor(externalFactor, fallbackValue, "external");
+        }
+
+        const externalScalar = getExternalScalar(surveyId, code);
+        if (externalScalar !== undefined) {
+            return normalizeMaterialFactor(externalScalar, fallbackValue, "external");
+        }
+    }
+
+    return normalizeMaterialFactor(fallbackValue, fallbackValue, "fallback");
+}
+
+function sumMaterialFactors(factors) {
+    const components = materialComponents.reduce((acc, component) => {
+        acc[component] = factors.reduce((sum, factor) => sum + (Number(factor?.components?.[component]) || 0), 0);
+        return acc;
+    }, {});
+
+    return {
+        components,
+        tmrFactor: calculateTMR(components.abiotic, components.biotic, components.earth),
+        waterFactor: components.water,
+        airFactor: components.air,
+        source: factors.some((factor) => factor?.source === "external") ? "external" : "fallback"
+    };
+}
+
+function pickDeviceMaterialFactor(item) {
+    const deviceKey = item.dataKey || item.code;
+    const productFactor = pickFirstMaterialFactor("electricity", [`${deviceKey}_product`, `${item.code}_product`], 0);
+    const packagingFactor = pickFirstMaterialFactor("electricity", [`${deviceKey}_packaging`, `${item.code}_packaging`], 0);
+    const useFactor = pickFirstMaterialFactor("electricity", [`${deviceKey}_use`, `${item.code}_use`], 0);
+    const hasCompositionFactor = hasMaterialFactor(productFactor) || hasMaterialFactor(packagingFactor) || hasMaterialFactor(useFactor);
+
+    if (hasCompositionFactor) {
+        const factors = [productFactor, packagingFactor];
+        if (calculationConfig.includeDeviceUsePhase) {
+            factors.push(useFactor);
+        }
+        return sumMaterialFactors(factors);
+    }
+
+    const deviceData = DEVICE_DATA[deviceKey];
+    const fallbackLifetimeTmr = deviceData
+        ? (calculationConfig.includeDeviceUsePhase ? deviceData.tmrLifetimeWithUse : deviceData.tmrLifetimeNoUse)
+        : item.factor;
+
+    return pickFirstMaterialFactor("electricity", [deviceKey, item.code], { tmrFactor: fallbackLifetimeTmr || 0 });
+}
+
+function calculateMaterialImpact(amount, factorInfo) {
+    const safeAmount = Number(amount) || 0;
+    const components = materialComponents.reduce((acc, component) => {
+        acc[component] = calculateMI(safeAmount, Number(factorInfo?.components?.[component]) || 0);
+        return acc;
+    }, {});
+
+    return {
+        amount: safeAmount,
+        components,
+        tmr: calculateTMR(components.abiotic, components.biotic, components.earth),
+        water: components.water,
+        air: components.air
+    };
+}
+
+function scaleMaterialImpact(impact, multiplier) {
+    const safeMultiplier = Number(multiplier) || 0;
+    const components = materialComponents.reduce((acc, component) => {
+        acc[component] = (Number(impact?.components?.[component]) || 0) * safeMultiplier;
+        return acc;
+    }, {});
+
+    return {
+        amount: (Number(impact?.amount) || 0) * safeMultiplier,
+        components,
+        tmr: calculateTMR(components.abiotic, components.biotic, components.earth),
+        water: components.water,
+        air: components.air
+    };
+}
+
+function createTmrDetailRow({ label, annualAmount, unit, impact, note = "" }) {
+    return {
+        label,
+        annualAmount: Number(annualAmount) || 0,
+        unit,
+        mi: impact?.components || {},
+        tmr: Number(impact?.tmr) || 0,
+        water: Number(impact?.water) || 0,
+        air: Number(impact?.air) || 0,
+        note,
+        value: `${formatKg(impact?.tmr || 0)}/năm`
+    };
+}
+
+function sumDetailTmr(rows) {
+    return rows.reduce((sum, row) => sum + (Number(row.tmr) || 0), 0);
+}
+
+function evaluateSustainability(totalTMRPersonYear) {
+    const sustainableTarget = sustainabilityBenchmark.sustainableTargetKgPersonYear;
+    const mediumThreshold = sustainabilityBenchmark.mediumThresholdKgPersonYear;
+    const highThreshold = sustainabilityBenchmark.highThresholdKgPersonYear;
+
+    if (![sustainableTarget, mediumThreshold, highThreshold].every((value) => value !== null && value !== undefined && Number.isFinite(Number(value)))) {
+        return {
+            level: "unknown",
+            label: "Cần ngưỡng tham chiếu",
+            message: "Dấu chân vật chất của bạn đã được tính theo kg/người/năm. Cần so sánh với ngưỡng tham chiếu để kết luận mức độ tiêu dùng bền vững."
+        };
+    }
+
+    if (totalTMRPersonYear <= sustainableTarget) {
+        return {
+            level: "low",
+            label: "Tiêu dùng tương đối bền vững",
+            message: "Dấu chân vật chất của bạn đang nằm trong vùng mục tiêu tham chiếu."
+        };
+    }
+
+    if (totalTMRPersonYear <= mediumThreshold) {
+        return {
+            level: "medium",
+            label: "Tiêu dùng ở mức trung bình",
+            message: "Bạn có thể ưu tiên giảm các nhóm có đóng góp lớn nhất trong bảng phân rã."
+        };
+    }
+
+    return {
+        level: "high",
+        label: "Tiêu dùng chưa bền vững",
+        message: "Dấu chân vật chất của bạn cao so với ngưỡng tham chiếu. Nên ưu tiên giảm nhóm tiêu dùng có đóng góp lớn nhất."
+    };
+}
+
+function generateConsumptionReview(totalResourceUseKgPerPersonYear, byCategory) {
+    const benchmarks = RESOURCE_BENCHMARKS;
+    let level;
+    let title;
+    let summary;
+
+    if (totalResourceUseKgPerPersonYear <= benchmarks.sustainableKgPerPersonYear) {
+        level = "good";
+        title = "Bạn đang ở mức tiêu dùng tương đối bền vững";
+        summary = "Kết quả của bạn đang nằm trong mức tiêu dùng tương đối bền vững. Bạn nên tiếp tục duy trì thói quen hiện tại và ưu tiên các lựa chọn giúp kéo dài tuổi thọ sản phẩm, tiết kiệm điện, giảm lãng phí thực phẩm và sử dụng phương tiện di chuyển ít phát thải hơn.";
+    } else if (totalResourceUseKgPerPersonYear <= benchmarks.globalAverageKgPerPersonYear) {
+        level = "medium";
+        title = "Bạn đang tiêu dùng cao hơn mức bền vững khuyến nghị";
+        summary = "Kết quả của bạn cao hơn mức tiêu dùng bền vững khuyến nghị. Điều này cho thấy vẫn còn một số nhóm tiêu dùng có thể cải thiện. Hãy ưu tiên giảm các nhóm đang chiếm tỷ trọng cao nhất trong kết quả của bạn.";
+    } else {
+        level = "high";
+        title = "Bạn đang tiêu dùng cao hơn mức trung bình tham khảo";
+        summary = "Kết quả của bạn cao hơn mức trung bình tham khảo. Mức tiêu dùng này chưa thật sự bền vững và nên được điều chỉnh. Bạn nên bắt đầu từ nhóm tiêu dùng có đóng góp lớn nhất trong kết quả khảo sát.";
+    }
+
+    const categorySuggestions = {
+        device: "Nhóm thiết bị điện đang đóng góp cao. Bạn có thể giảm bằng cách kéo dài thời gian sử dụng thiết bị, sửa chữa khi có thể, hạn chế thay mới quá sớm và chọn thiết bị bền, tiết kiệm điện.",
+        food: "Nhóm thực phẩm đang đóng góp cao trong kết quả của bạn. Bạn có thể giảm bằng cách hạn chế lãng phí thực phẩm, cân đối lượng thịt đỏ, tăng rau củ theo mùa và ưu tiên thực phẩm địa phương khi phù hợp.",
+        transport: "Nhóm đi lại đang chiếm tỷ trọng cao. Bạn có thể giảm bằng cách ưu tiên đi bộ, xe đạp, xe buýt, đi chung xe hoặc giảm các chuyến đi không cần thiết.",
+        energy: "Nhóm điện, nước, gas đang đóng góp đáng kể. Bạn có thể giảm bằng cách tắt thiết bị khi không sử dụng, dùng thiết bị tiết kiệm điện, điều chỉnh nhiệt độ máy lạnh hợp lý và theo dõi lượng điện hằng tháng.",
+        clothing: "Nhóm quần áo, giày dép đang đóng góp cao. Bạn có thể giảm bằng cách mua ít hơn nhưng chất lượng hơn, sử dụng lâu hơn, sửa chữa hoặc tái sử dụng thay vì thay mới thường xuyên.",
+        entertainment: "Nhóm giải trí đang đóng góp đáng kể. Bạn có thể giảm bằng cách cân đối thời gian sử dụng thiết bị điện tử, ưu tiên các hoạt động ngoài trời gần nơi ở và hạn chế các hoạt động tiêu thụ nhiều năng lượng."
+    };
+
+    const topCategories = Object.entries(byCategory || {})
+        .filter(([key, value]) => key !== "other" && Number(value) > 0)
+        .sort((a, b) => Number(b[1]) - Number(a[1]))
+        .slice(0, 3);
+
+    const suggestions = topCategories
+        .map(([key, value]) => ({
+            category: key,
+            value,
+            text: categorySuggestions[key]
+        }))
+        .filter((item) => item.text);
+
+    return {
+        level,
+        title,
+        summary,
+        suggestions,
+        benchmarks
+    };
+}
+
+function buildTmrResult({ byCategory = {}, detail = {}, sourceMode = "fallback" }) {
+    const householdByCategory = createEmptyCategoryTotals();
+    Object.entries(byCategory).forEach(([category, value]) => {
+        if (Object.prototype.hasOwnProperty.call(householdByCategory, category)) {
+            householdByCategory[category] += Number(value) || 0;
+        }
+    });
+
+    const normalizedDetail = createEmptyDetail();
+    Object.entries(detail).forEach(([category, rows]) => {
+        if (Object.prototype.hasOwnProperty.call(normalizedDetail, category) && Array.isArray(rows)) {
+            normalizedDetail[category] = rows;
+        }
+    });
+
+    const totalTMRHouseholdYear = Object.values(householdByCategory).reduce((sum, value) => sum + value, 0);
+    const totalTMRPersonYear = calculatePerPersonYear(totalTMRHouseholdYear, getHouseholdSize());
+    const totalTMRPersonYearTon = totalTMRPersonYear / 1000;
+    const personByCategory = tmrCategoryKeys.reduce((totals, category) => {
+        totals[category] = calculatePerPersonYear(householdByCategory[category], getHouseholdSize());
+        return totals;
+    }, {});
+
+    return {
+        totalTMRHouseholdYear,
+        totalTMRPersonYear,
+        totalTMRPersonYearTon,
+        byCategory: personByCategory,
+        byCategoryHouseholdYear: householdByCategory,
+        detail: normalizedDetail,
+        evaluation: evaluateSustainability(totalTMRPersonYear),
+        total: totalTMRPersonYear.toFixed(1),
+        breakdown: Object.values(normalizedDetail).flat(),
+        sourceMode
+    };
+}
+
+function getEntryResult(entry) {
+    if (entry?.result && typeof entry.result === "object") return entry.result;
+    if (entry?.resultJson) {
+        try {
+            return JSON.parse(entry.resultJson);
+        } catch (error) {
+            return null;
+        }
+    }
+    return null;
+}
+
+function getEntryTotalPersonYear(entry) {
+    const storedResult = getEntryResult(entry);
+    const value = storedResult?.totalTMRPersonYear ?? entry?.totalTMRPersonYear ?? entry?.total;
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) ? numericValue : 0;
+}
+
+function mergeResultIntoTotals(targetTotals, targetDetail, result) {
+    if (!result) return;
+    tmrCategoryKeys.forEach((category) => {
+        const householdValue = result.byCategoryHouseholdYear?.[category] ?? result.byCategory?.[category];
+        targetTotals[category] += Number(householdValue) || 0;
+        if (Array.isArray(result.detail?.[category])) {
+            targetDetail[category] = targetDetail[category].concat(result.detail[category]);
+        }
+    });
+}
+
+function buildSessionResult(currentResult = null, currentSurveyId = "") {
+    const latestBySurvey = new Map();
+
+    state.history.forEach((entry) => {
+        if (!entry.surveyId || latestBySurvey.has(entry.surveyId)) return;
+        const storedResult = getEntryResult(entry);
+        if (storedResult?.byCategory) {
+            latestBySurvey.set(entry.surveyId, storedResult);
+        }
+    });
+
+    if (currentResult && currentSurveyId) {
+        latestBySurvey.set(currentSurveyId, currentResult);
+    }
+
+    const byCategory = createEmptyCategoryTotals();
+    const detail = createEmptyDetail();
+    latestBySurvey.forEach((result) => mergeResultIntoTotals(byCategory, detail, result));
+
+    return buildTmrResult({
+        byCategory,
+        detail,
+        sourceMode: currentResult?.sourceMode || "fallback"
+    });
+}
+
 function getOrCreateSessionId() {
     const existing = sessionStorage.getItem(SESSION_ID_KEY);
     if (existing) return existing;
@@ -523,9 +1327,9 @@ function renderHistory() {
                 <div>
                     <h4>${escapeHtml(entry.surveyName)}</h4>
                     <p>${escapeHtml(entry.fullname)} • ${escapeHtml(entry.location)}</p>
-                    <p>${escapeHtml(entry.completedAtLabel)} • ${escapeHtml(entry.sourceLabel)}</p>
+                    <p>${escapeHtml(entry.completedAtLabel)} • ${escapeHtml(entry.sourceLabel || "Bảng hệ số MIT/TMR")}</p>
                 </div>
-                <strong>${escapeHtml(entry.total)} MI</strong>
+                <strong>${escapeHtml(formatKgPerPersonYear(getEntryTotalPersonYear(entry)))}</strong>
             </article>
         `).join("")
         : `
@@ -610,20 +1414,55 @@ function parseConfigNumber(value) {
     return Number(normalized);
 }
 
+function buildConfigValueFromRow(row, value, componentName) {
+    const factorValue = {};
+
+    materialComponents.forEach((component) => {
+        const componentValue = parseOptionalNumber(readConfigValue(row, getMaterialComponentAliases(component)));
+        if (componentValue !== null) {
+            factorValue[component] = componentValue;
+        }
+    });
+
+    if (componentName && value !== null) {
+        factorValue[componentName] = value;
+    }
+
+    if (Object.keys(factorValue).length > 0) {
+        return factorValue;
+    }
+
+    return value;
+}
+
+function mergeConfigValue(existingValue, nextValue) {
+    if (existingValue === undefined) return nextValue;
+    if (typeof existingValue === "object" || typeof nextValue === "object") {
+        return {
+            ...(typeof existingValue === "object" ? existingValue : { value: existingValue }),
+            ...(typeof nextValue === "object" ? nextValue : { value: nextValue })
+        };
+    }
+
+    return nextValue;
+}
+
 function rowsToMiConfig(rows) {
     return rows.reduce((acc, row) => {
         const survey = String(readConfigValue(row, ["survey", "survey_id", "surveyId", "khao_sat", "khảo sát", "nhom", "nhóm"])).trim();
         const code = String(readConfigValue(row, ["code", "ma", "mã", "ma_he_so", "mã hệ số", "item"])).trim();
-        const value = parseConfigNumber(readConfigValue(row, ["value", "gia_tri", "giá trị", "he_so", "hệ số", "factor", "mi"]));
+        const value = parseOptionalNumber(readConfigValue(row, ["value", "gia_tri", "giá trị", "he_so", "hệ số", "factor", "mi", "mit", "tmr"]));
         const type = String(readConfigValue(row, ["type", "loai", "loại", "kind"]) || "factor").trim().toLowerCase();
+        const componentName = normalizeMaterialComponentName(readConfigValue(row, ["component", "thanh_phan", "thành phần", "mi_component", "mit_component"]));
+        const configValue = buildConfigValueFromRow(row, value, componentName);
 
-        if (!survey || !code || Number.isNaN(value)) return acc;
+        if (!survey || !code || configValue === null) return acc;
         if (!acc[survey]) {
             acc[survey] = { factors: {}, scalars: {} };
         }
 
         const bucket = type === "scalar" ? acc[survey].scalars : acc[survey].factors;
-        bucket[code] = value;
+        bucket[code] = mergeConfigValue(bucket[code], configValue);
         return acc;
     }, {});
 }
@@ -657,33 +1496,22 @@ function parseCsvConfig(csvText) {
     const lines = csvText.split(/\r?\n/).filter(Boolean);
     if (lines.length < 2) return {};
 
-    const headers = parseCsvLine(lines[0]).map(normalizeConfigHeader);
-    const surveyIndex = findConfigIndex(headers, ["survey", "survey_id", "khao_sat", "khảo sát", "nhom", "nhóm"]);
-    const codeIndex = findConfigIndex(headers, ["code", "ma", "mã", "ma_he_so", "mã hệ số", "item"]);
-    const valueIndex = findConfigIndex(headers, ["value", "gia_tri", "giá trị", "he_so", "hệ số", "factor", "mi"]);
-    const typeIndex = findConfigIndex(headers, ["type", "loai", "loại", "kind"]);
+    const headers = parseCsvLine(lines[0]);
+    const normalizedHeaders = headers.map(normalizeConfigHeader);
+    const surveyIndex = findConfigIndex(normalizedHeaders, ["survey", "survey_id", "khao_sat", "khảo sát", "nhom", "nhóm"]);
+    const codeIndex = findConfigIndex(normalizedHeaders, ["code", "ma", "mã", "ma_he_so", "mã hệ số", "item"]);
 
-    if (surveyIndex === -1 || codeIndex === -1 || valueIndex === -1) return {};
+    if (surveyIndex === -1 || codeIndex === -1) return {};
 
-    return lines.slice(1).reduce((acc, line) => {
+    const rows = lines.slice(1).map((line) => {
         const cells = parseCsvLine(line);
-        const surveyId = cells[surveyIndex];
-        const code = cells[codeIndex];
-        const value = parseConfigNumber(cells[valueIndex]);
-        const type = typeIndex >= 0 ? cells[typeIndex] : "factor";
+        return headers.reduce((row, header, index) => {
+            row[header] = cells[index] ?? "";
+            return row;
+        }, {});
+    });
 
-        if (!surveyId || !code || Number.isNaN(value)) return acc;
-        if (!acc[surveyId]) {
-            acc[surveyId] = { factors: {}, scalars: {} };
-        }
-
-        if (type === "scalar") {
-            acc[surveyId].scalars[code] = value;
-        } else {
-            acc[surveyId].factors[code] = value;
-        }
-        return acc;
-    }, {});
+    return rowsToMiConfig(rows);
 }
 
 async function loadExternalMiConfig() {
@@ -699,7 +1527,7 @@ async function loadExternalMiConfig() {
                 source: {
                     mode: "external",
                     label: "App Script / JSON",
-                    detail: "Đã lấy hệ số MI từ endpoint JSON bên ngoài."
+                    detail: "Đã lấy hệ số MIT/TMR từ endpoint JSON bên ngoài."
                 }
             };
         },
@@ -714,7 +1542,7 @@ async function loadExternalMiConfig() {
                 source: {
                     mode: "external",
                     label: "Google Sheet / CSV",
-                    detail: "Đã lấy hệ số MI từ Google Sheet public."
+                    detail: "Đã lấy hệ số MIT/TMR từ Google Sheet public."
                 }
             };
         }
@@ -942,7 +1770,7 @@ function renderQuestion(question, surveyId) {
                     <span class="eco-mini-icon"><i class="fas fa-leaf"></i></span>
                     <div>
                         <strong>Chỉ cần nhập một thông tin</strong>
-                        <p>Hệ thống dùng mức giá quy đổi tham khảo 3.000 VNĐ/kWh và có thể cập nhật từ bảng hệ số MI.</p>
+                        <p>Hệ thống dùng mức giá quy đổi tham khảo 3.000 VNĐ/kWh và có thể cập nhật từ bảng hệ số MIT/TMR.</p>
                     </div>
                 </div>
                 <div class="consumption-tabs" role="radiogroup" aria-label="Cách nhập mức sử dụng điện">
@@ -1134,8 +1962,8 @@ function startSurvey(surveyId) {
 function getComparisonSummary(surveyId, currentTotal) {
     const relevant = state.history
         .filter((entry) => entry.surveyId === surveyId)
-        .map((entry) => Number(entry.total))
-        .filter((value) => !Number.isNaN(value));
+        .map(getEntryTotalPersonYear)
+        .filter((value) => Number.isFinite(value) && value > 0);
 
     if (relevant.length === 0) {
         return {
@@ -1158,51 +1986,71 @@ function renderResult(result, survey) {
     const resultSurveyName = document.getElementById("resultSurveyName");
     const resultTotal = document.getElementById("resultTotal");
     const resultBreakdown = document.getElementById("resultBreakdown");
+    const resultReviewCard = document.getElementById("resultReviewCard");
+    const resultSuggestionsCard = document.getElementById("resultSuggestionsCard");
     const comparisonCard = document.getElementById("comparisonCard");
 
-    if (!resultLead || !resultSurveyName || !resultTotal || !resultBreakdown || !comparisonCard) return;
+    if (!resultLead || !resultSurveyName || !resultTotal || !resultReviewCard || !resultSuggestionsCard) return;
 
-    const participantName = state.profile?.fullname || "Bạn";
-    resultLead.textContent = `${participantName} đã hoàn thành ${survey.name}. Đây là kết quả MI ước tính cho khảo sát vừa chọn.`;
+    const sessionResult = buildSessionResult(result, survey.id);
+    const review = generateConsumptionReview(sessionResult.totalTMRPersonYear, sessionResult.byCategory);
+    const badgeLabels = {
+        good: "Tiêu dùng tương đối bền vững",
+        medium: "Cần cải thiện",
+        high: "Chưa bền vững"
+    };
+
+    resultLead.textContent = "";
     resultSurveyName.textContent = survey.name;
-    const numericTotal = Number(result.total);
-    resultTotal.textContent = Number.isFinite(numericTotal)
-        ? `${numericTotal.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} MI`
-        : "0 MI";
-    resultBreakdown.innerHTML = result.breakdown.length
-        ? result.breakdown.map((item) => `
-            <div class="result-item">
-                <span>${item.label}</span>
-                <strong>${item.value}</strong>
-            </div>
-        `).join("")
-        : '<div class="result-item"><span>Chưa có dữ liệu đủ để tính MI.</span><strong>0</strong></div>';
+    resultTotal.textContent = formatKgPerPersonYear(sessionResult.totalTMRPersonYear);
+    const resultTotalUnit = resultTotal.nextElementSibling;
+    if (resultTotalUnit) {
+        resultTotalUnit.textContent = `≈ ${formatNumber(sessionResult.totalTMRPersonYearTon, 2)} tấn/người/năm`;
+    }
 
-    const comparison = getComparisonSummary(survey.id, Number(result.total));
-    if (comparison.count > 0) {
-        comparisonCard.innerHTML = `
-            <h4>So sánh với các lần bạn đã làm trước đó trên thiết bị này</h4>
-            <p>Phần này hiện chỉ so sánh với lịch sử cục bộ của chính bạn trong trình duyệt này. Khi có dữ liệu chung, mình có thể nâng cấp sang so sánh với trung bình nhiều người.</p>
-            <div class="comparison-stats">
-                <div class="comparison-stat">
-                    <span>Kết quả hiện tại</span>
-                    <strong>${Number(result.total).toFixed(1)} MI</strong>
-                </div>
-                <div class="comparison-stat">
-                    <span>Trung bình trước đó</span>
-                    <strong>${comparison.average.toFixed(1)} MI</strong>
-                </div>
-                <div class="comparison-stat">
-                    <span>Chênh lệch</span>
-                    <strong>${comparison.diff >= 0 ? "+" : ""}${comparison.diff.toFixed(1)} MI</strong>
-                </div>
-            </div>
-        `;
-    } else {
-        comparisonCard.innerHTML = `
-            <h4>So sánh kết quả</h4>
-            <p>Hiện chưa có đủ lịch sử trên thiết bị này để tạo trung bình so sánh. Sau khi bạn làm thêm các khảo sát trong phiên, mục này sẽ bắt đầu hiện số liệu đối chiếu.</p>
-        `;
+    resultReviewCard.innerHTML = `
+        <div class="resource-card-head">
+            <span class="resource-status-badge ${escapeHtml(review.level)}">${escapeHtml(badgeLabels[review.level] || review.title)}</span>
+            <h4>Nhận xét</h4>
+        </div>
+        <h3>${escapeHtml(review.title)}</h3>
+        <p>${escapeHtml(review.summary)}</p>
+    `;
+
+    const topCategoryMarkup = review.suggestions.length
+        ? review.suggestions.map((item, index) => `
+            <li>
+                <span>${index + 1}. ${escapeHtml(categoryLabels[item.category] || item.category)}</span>
+                <strong>${escapeHtml(formatKgPerPersonYear(item.value))}</strong>
+            </li>
+        `).join("")
+        : '<li><span>Chưa có nhóm tiêu dùng nào có dữ liệu đủ lớn để xếp hạng.</span><strong>0 kg/người/năm</strong></li>';
+
+    const suggestionMarkup = review.suggestions.length
+        ? review.suggestions.map((item) => `<li>${escapeHtml(item.text)}</li>`).join("")
+        : "<li>Hãy hoàn thành thêm các nhóm khảo sát để hệ thống đưa ra gợi ý cụ thể hơn.</li>";
+
+    resultSuggestionsCard.innerHTML = `
+        <div class="resource-card-head">
+            <h4>Gợi ý cải thiện</h4>
+        </div>
+        <div class="top-category-block">
+            <h5>Nhóm ảnh hưởng nhiều nhất</h5>
+            <ol class="top-category-list">${topCategoryMarkup}</ol>
+        </div>
+        <div class="suggestion-block">
+            <h5>Ưu tiên hành động</h5>
+            <ul class="suggestion-list">${suggestionMarkup}</ul>
+        </div>
+    `;
+
+    if (resultBreakdown) {
+        resultBreakdown.innerHTML = "";
+        resultBreakdown.hidden = true;
+    }
+    if (comparisonCard) {
+        comparisonCard.innerHTML = "";
+        comparisonCard.hidden = true;
     }
 }
 
@@ -1234,10 +2082,17 @@ function buildSubmissionPayload(formData, result) {
     payload.append("device_session_id", deviceSessionId);
     payload.append("survey_id", state.selectedSurveyId);
     payload.append("survey_name", state.selectedSurveyName);
-    payload.append("result_total", result?.total ?? "");
+    payload.append("result_total", result?.totalTMRPersonYear ?? "");
+    payload.append("result_total_tmr_household_year", result?.totalTMRHouseholdYear ?? "");
+    payload.append("result_total_tmr_person_year", result?.totalTMRPersonYear ?? "");
+    payload.append("result_total_tmr_person_year_ton", result?.totalTMRPersonYearTon ?? "");
     payload.append("result_source_mode", result?.sourceMode ?? "");
-    payload.append("mi_source_label", result?.sourceMode === "external" ? state.miSource.label : "Bảng số liệu MI");
+    payload.append("mi_source_label", result?.sourceMode === "external" ? state.miSource.label : "Bảng hệ số MIT/TMR");
     payload.append("mi_source_detail", state.miSource.detail || "");
+    payload.append("result_by_category_json", JSON.stringify(result?.byCategory ?? {}));
+    payload.append("result_by_category_household_year_json", JSON.stringify(result?.byCategoryHouseholdYear ?? {}));
+    payload.append("result_detail_json", JSON.stringify(result?.detail ?? {}));
+    payload.append("result_evaluation_json", JSON.stringify(result?.evaluation ?? {}));
     payload.append("result_breakdown_json", JSON.stringify(result?.breakdown ?? []));
     payload.append("response_json", JSON.stringify(responseData));
     payload.append("profile_json", JSON.stringify(state.profile ?? {}));
@@ -1301,17 +2156,17 @@ async function handleSurveySubmit(event) {
     let result;
     try {
         result = survey.calculate(formData);
-        if (!result || !Number.isFinite(Number(result.total))) {
-            throw new Error("Invalid MI result");
+        if (!result || !Number.isFinite(Number(result.totalTMRPersonYear))) {
+            throw new Error("Invalid TMR result");
         }
         renderResult(result, survey);
     } catch (error) {
-        console.error("MI calculation failed:", error);
+        console.error("TMR calculation failed:", error);
         submitButton.disabled = false;
         submitButton.innerHTML = 'Hoàn thành khảo sát <i class="fa fa-paper-plane"></i>';
         if (submitStatus) {
             submitStatus.className = "submit-status error";
-            submitStatus.textContent = "Không thể tính chỉ số MI. Vui lòng tải lại trang và thử lại.";
+            submitStatus.textContent = "Không thể tính dấu chân vật chất. Vui lòng tải lại trang và thử lại.";
         }
         return;
     }
@@ -1321,8 +2176,12 @@ async function handleSurveySubmit(event) {
         surveyName: survey.name,
         fullname: state.profile?.fullname || "Người dùng",
         location: [state.profile?.ward, state.profile?.district, state.profile?.province].filter(Boolean).join(", "),
-        total: result.total,
-        sourceLabel: result.sourceMode === "external" ? state.miSource.label : "Bảng số liệu MI",
+        total: result.totalTMRPersonYear.toFixed(1),
+        totalTMRHouseholdYear: result.totalTMRHouseholdYear,
+        totalTMRPersonYear: result.totalTMRPersonYear,
+        totalTMRPersonYearTon: result.totalTMRPersonYearTon,
+        result,
+        sourceLabel: result.sourceMode === "external" ? state.miSource.label : "Bảng hệ số MIT/TMR",
         completedAt: new Date().toISOString(),
         completedAtLabel: new Date().toLocaleString("vi-VN")
     });
