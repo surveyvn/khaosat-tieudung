@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#07533f">
     <title>Khảo sát Tiêu dùng Bền vững - NTTU</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+    <link rel="manifest" href="site.webmanifest">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css?v=20260626-2">
@@ -111,7 +114,7 @@
                     <div class="two-col">
                         <div class="question-group">
                             <label class="question-label" for="age">Độ tuổi</label>
-                            <input id="age" type="number" name="age" min="1" required>
+                            <input id="age" type="number" name="age" min="1" placeholder="Nhập tuổi" required>
                         </div>
                         <div class="question-group">
                             <label class="question-label" for="gender">Giới tính</label>
@@ -127,31 +130,26 @@
                         <label class="question-label" for="household">Hộ gia đình có bao nhiêu thành viên?</label>
                         <div class="profile-input-wrap">
                             <span class="profile-input-icon"><i class="fas fa-people-roof"></i></span>
-                            <input id="household" class="smart-number profile-icon-input" type="number" name="household" min="0" step="1" inputmode="numeric" value="0" required>
+                            <input id="household" class="smart-number profile-icon-input" type="number" name="household" min="0" step="1" inputmode="numeric" placeholder="Nhập số thành viên" required>
                             <span class="profile-input-unit">thành viên</span>
                         </div>
                     </div>
 
                     <div class="question-group">
-                        <label class="question-label" for="province">Tỉnh / Thành phố</label>
-                        <select id="province" name="province" required>
+                        <label class="question-label" for="province">Tỉnh/Thành phố</label>
+                        <select id="province" name="thanhPho" required>
                             <option value="">Đang tải dữ liệu...</option>
                         </select>
+                        <input id="provinceCode" type="hidden" name="maThanhPho">
                     </div>
 
-                    <div class="two-col">
-                        <div class="question-group">
-                            <label class="question-label" for="district">Quận / Huyện</label>
-                            <select id="district" name="district" required disabled>
-                                <option value="">Chọn tỉnh / thành trước...</option>
-                            </select>
-                        </div>
-                        <div class="question-group">
-                            <label class="question-label" for="ward">Phường / Xã</label>
-                            <select id="ward" name="ward" required disabled>
-                                <option value="">Chọn quận / huyện trước...</option>
-                            </select>
-                        </div>
+                    <div class="question-group">
+                        <label class="question-label" for="ward">Xã/Phường</label>
+                        <select id="ward" name="xa" required disabled>
+                            <option value="">Vui lòng chọn Tỉnh/Thành phố trước</option>
+                        </select>
+                        <input id="wardManual" class="location-manual hidden" type="text" name="xa" placeholder="Nhập Xã/Phường" disabled>
+                        <input id="wardCode" type="hidden" name="maXa">
                     </div>
 
                     <div class="button-group">
@@ -185,6 +183,7 @@
                 </section>
 
                 <div class="survey-grid" id="surveyGrid"></div>
+                <div id="surveySelectorStatus" class="submit-status" role="status" aria-live="polite"></div>
 
                 <div class="button-group">
                     <button type="button" class="btn-prev" id="backToProfile">Quay lại</button>
@@ -260,6 +259,7 @@
         </section>
     </main>
 
-    <script src="script.js?v=20260626-2"></script>
+    <script src="locations-2025.js?v=20260703-1"></script>
+    <script src="script.js?v=20260703-result-1"></script>
 </body>
 </html>
