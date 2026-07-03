@@ -1,10 +1,28 @@
 const scriptURL = "https://script.google.com/macros/s/AKfycbyHSXgSIO9pYBIQubS-_65CmrUzKIzJRBKpjRci1M3mLrbw0FZkbBJmcmonZ8bynAkMnQ/exec";
-const DATA_SCRIPT_URL = "";
+const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx5byG8NRx_wvmsBW5pozH6hnkVnC-GdHaOxEg5mtVCMuG8DKxYCLvBxLf4TDBirnq_gg/exec";
+const GOOGLE_SHEET_SECRET_KEY = "khaosat_2026";
+const GOOGLE_SHEET_SOURCE = "khaosat-tieudung";
 const SHEET_SOURCE_URL = "https://docs.google.com/spreadsheets/d/14Zo1oQT0--dw7L5OJ46OGVivvcxqFViqJzTMhkrrXXg/edit?usp=sharing";
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/14Zo1oQT0--dw7L5OJ46OGVivvcxqFViqJzTMhkrrXXg/export?format=csv";
 const MI_CONFIG_ENDPOINT = `${scriptURL}?action=mi-config`;
 const HISTORY_STORAGE_KEY = "nttu-survey-history";
 const SESSION_ID_KEY = "nttu-device-session-id";
+const RESPONDENT_ID_KEY = "nttu-respondent-id";
+const ACTIVE_SURVEY_IDS = ["electricity", "food", "fashion"];
+
+const SURVEY_CODE_BY_ID = {
+    food: "TP",
+    electricity: "DIEN",
+    water: "NUOC",
+    waste: "RAC",
+    transport: "DC",
+    fashion: "MS",
+    devices: "TBI",
+    equipment: "TBI",
+    profile: "TTC",
+    lifestyle: "TTC",
+    entertainment: "TTC"
+};
 
 const state = {
     profile: null,
@@ -20,6 +38,7 @@ const state = {
 };
 
 const deviceSessionId = getOrCreateSessionId();
+const respondentId = getOrCreateRespondentId();
 
 const tmrCategoryKeys = ["device", "food", "transport", "energy", "clothing", "entertainment", "other"];
 const materialComponents = ["abiotic", "biotic", "earth", "water", "air"];
@@ -52,6 +71,8 @@ const calculationConfig = {
 };
 
 const sustainabilityBenchmark = CONFIG.sustainabilityBenchmark;
+// Ước tính tốc độ trung bình khi đi mua thực phẩm, dùng để quy đổi phút sang km.
+const AVERAGE_FOOD_TRIP_SPEED_KMH = 20;
 
 const DEVICE_DATA = {
     tv: {
@@ -147,6 +168,142 @@ const RESOURCE_BENCHMARKS = {
     sourceNote: "Mốc 8 tấn/người/năm dùng làm ngưỡng tiêu dùng bền vững tham khảo; mốc 13,2 tấn/người/năm dùng làm trung bình toàn cầu gần đây."
 };
 
+const SUGGESTION_LEVELS = {
+    good: {
+        label: "Mức tốt",
+        badgeClass: "good"
+    },
+    medium: {
+        label: "Mức trung bình",
+        badgeClass: "medium"
+    },
+    improve: {
+        label: "Mức cần cải thiện",
+        badgeClass: "improve"
+    },
+    high: {
+        label: "Mức cao/cần chú ý",
+        badgeClass: "high"
+    }
+};
+
+const SURVEY_SUGGESTIONS = {
+    DIEN: {
+        good: {
+            title: "Bạn đang sử dụng điện khá tiết kiệm",
+            summary: "Kết quả điện/năng lượng đang ở mức tốt. Bạn nên tiếp tục duy trì các thói quen tiết kiệm hiện có.",
+            suggestions: [
+                "Duy trì thói quen tắt thiết bị khi không sử dụng.",
+                "Tiếp tục ưu tiên thiết bị tiết kiệm điện.",
+                "Theo dõi hóa đơn điện để giữ mức tiêu thụ ổn định."
+            ]
+        },
+        medium: {
+            title: "Mức sử dụng điện còn vài điểm có thể tối ưu",
+            summary: "Bạn có thể giảm thêm tác động bằng các thay đổi nhỏ trong sinh hoạt hằng ngày.",
+            suggestions: [
+                "Hạn chế để thiết bị ở chế độ chờ quá lâu.",
+                "Điều chỉnh máy lạnh ở mức hợp lý.",
+                "Ưu tiên dùng đèn LED và thiết bị có nhãn tiết kiệm năng lượng."
+            ]
+        },
+        improve: {
+            title: "Nên ưu tiên giảm nhóm thiết bị tiêu thụ điện lớn",
+            summary: "Kết quả cho thấy điện/năng lượng có thể đang tạo tác động đáng kể.",
+            suggestions: [
+                "Kiểm tra các thiết bị tiêu thụ điện lớn như máy lạnh, tủ lạnh, máy nước nóng.",
+                "Giảm thời gian sử dụng thiết bị không cần thiết.",
+                "Xem lại thói quen sử dụng điện vào giờ cao điểm."
+            ]
+        },
+        high: {
+            title: "Mức tiêu thụ điện cần được chú ý hơn",
+            summary: "Mức tiêu thụ điện có thể đang cao so với nhu cầu cơ bản.",
+            suggestions: [
+                "Mức tiêu thụ điện có thể đang cao so với nhu cầu cơ bản.",
+                "Cần ưu tiên giảm thiết bị công suất lớn và kiểm tra thiết bị cũ.",
+                "Nên lập kế hoạch sử dụng điện theo ngày/tuần để kiểm soát tốt hơn."
+            ]
+        }
+    },
+    TP: {
+        good: {
+            title: "Thói quen tiêu dùng thực phẩm của bạn khá hợp lý",
+            summary: "Kết quả thực phẩm đang ở mức tốt. Hãy duy trì cách mua và sử dụng thực phẩm có kiểm soát.",
+            suggestions: [
+                "Tiếp tục ưu tiên thực phẩm địa phương và theo mùa.",
+                "Duy trì thói quen mua vừa đủ, hạn chế lãng phí.",
+                "Có thể tăng thêm thực phẩm ít tác động môi trường."
+            ]
+        },
+        medium: {
+            title: "Có thể giảm thêm lãng phí và thực phẩm tác động cao",
+            summary: "Một vài lựa chọn trong ăn uống và mua thực phẩm vẫn còn dư địa cải thiện.",
+            suggestions: [
+                "Lên kế hoạch bữa ăn để tránh mua dư.",
+                "Giảm thực phẩm đóng gói nếu chưa cần thiết.",
+                "Ưu tiên nơi mua gần hơn để giảm tác động di chuyển."
+            ]
+        },
+        improve: {
+            title: "Nên điều chỉnh nhóm thực phẩm có tác động cao",
+            summary: "Kết quả thực phẩm đang cao hơn mức mong muốn, nên ưu tiên các thay đổi dễ làm nhưng có tác động rõ.",
+            suggestions: [
+                "Giảm tần suất tiêu thụ nhóm thực phẩm có tác động cao.",
+                "Tăng tỷ lệ rau củ, thực phẩm theo mùa và nguồn gốc gần.",
+                "Hạn chế lãng phí thực phẩm bằng cách bảo quản và sử dụng hợp lý."
+            ]
+        },
+        high: {
+            title: "Mức tác động từ thực phẩm cần được chú ý",
+            summary: "Thói quen tiêu dùng thực phẩm có thể tạo tác động môi trường cao.",
+            suggestions: [
+                "Thói quen tiêu dùng thực phẩm có thể tạo tác động môi trường cao.",
+                "Nên xem lại tần suất mua, loại thực phẩm và khoảng cách di chuyển.",
+                "Ưu tiên thay đổi từ những nhóm tiêu thụ nhiều nhất trước."
+            ]
+        }
+    },
+    MS: {
+        good: {
+            title: "Bạn mua sắm khá có kiểm soát",
+            summary: "Kết quả thời trang/mua sắm đang ở mức tốt. Hãy tiếp tục ưu tiên dùng lâu và mua có chủ đích.",
+            suggestions: [
+                "Tiếp tục mua sắm có kiểm soát.",
+                "Ưu tiên dùng lâu, sửa chữa và tái sử dụng.",
+                "Duy trì thói quen cân nhắc trước khi mua mới."
+            ]
+        },
+        medium: {
+            title: "Có thể mua sắm chậm lại và chọn lọc hơn",
+            summary: "Bạn có vài điểm có thể cải thiện bằng cách cân nhắc kỹ trước khi mua mới.",
+            suggestions: [
+                "Hạn chế mua theo cảm xúc hoặc theo xu hướng ngắn hạn.",
+                "Ưu tiên sản phẩm bền, dễ phối và dùng được lâu.",
+                "Cân nhắc đồ second-hand nếu phù hợp."
+            ]
+        },
+        improve: {
+            title: "Nên giảm mua theo xu hướng ngắn hạn",
+            summary: "Mức mua sắm có thể đang làm tăng dấu chân vật chất đáng kể.",
+            suggestions: [
+                "Giảm số lượng sản phẩm mua mới mỗi tháng.",
+                "Tránh mua nhiều sản phẩm chỉ dùng ít lần.",
+                "Tái sử dụng, trao đổi hoặc quyên góp đồ cũ thay vì bỏ đi."
+            ]
+        },
+        high: {
+            title: "Mức tác động từ mua sắm cần được kiểm soát hơn",
+            summary: "Mức mua sắm/thời trang có thể đang cao so với nhu cầu thật.",
+            suggestions: [
+                "Mức mua sắm/thời trang có thể đang cao so với nhu cầu thật.",
+                "Cần giảm mua theo trend và ưu tiên chất lượng hơn số lượng.",
+                "Nên đặt giới hạn chi tiêu hoặc số món mua mới mỗi tháng."
+            ]
+        }
+    }
+};
+
 const surveys = [
     {
         id: "electricity",
@@ -176,13 +333,6 @@ const surveys = [
                         options: ["Không sử dụng", "1 bình gas/tháng", "2 bình gas/tháng"],
                         otherLabel: "Khác",
                         required: true
-                    },
-                    {
-                        id: "monthly_water",
-                        label: "Lượng nước sinh hoạt trung bình mỗi tháng (m3/tháng)",
-                        type: "number",
-                        min: 0,
-                        step: "any"
                     }
                 ]
             },
@@ -270,11 +420,6 @@ const surveys = [
             const energyFactor = pickFirstMaterialFactor("electricity", ["electricity", "energy_per_kwh"], ENERGY_FACTORS.electricity);
             usedExternal = usedExternal || energyFactor.source === "external";
             const energyImpact = calculateMaterialImpact(electricityKwhYear, energyFactor);
-            const monthlyWater = Number(formData.get("electricity_monthly_water")) || 0;
-            const waterM3Year = monthlyWater * 12;
-            const waterFactor = pickFirstMaterialFactor("electricity", ["water", "water_m3"], ENERGY_FACTORS.water);
-            usedExternal = usedExternal || waterFactor.source === "external";
-            const waterImpact = calculateMaterialImpact(waterM3Year, waterFactor);
             const energyRows = [
                 createTmrDetailRow({
                     label: consumptionBasis === "bill"
@@ -303,14 +448,6 @@ const surveys = [
                     value: `${Math.round(estimatedMonthlyBill).toLocaleString("vi-VN")} VNĐ/tháng`
                 }
             ];
-            if (waterImpact.tmr > 0) {
-                energyRows.push(createTmrDetailRow({
-                    label: "Nước sinh hoạt trong năm",
-                    annualAmount: waterM3Year,
-                    unit: "m3/năm",
-                    impact: waterImpact
-                }));
-            }
 
             const devicesQuestion = this.groups.flatMap((group) => group.questions).find((question) => question.id === "devices");
             const deviceRows = devicesQuestion.items.map((item) => {
@@ -402,8 +539,8 @@ const surveys = [
                     },
                     {
                         id: "distance",
-                        label: "Khoảng cách từ hộ gia đình đến nơi mua thực phẩm (km hoặc phút)",
-                        type: "text",
+                        label: "Khoảng cách từ hộ gia đình đến nơi mua thực phẩm",
+                        type: "food-distance-choice",
                         required: true
                     }
                 ]
@@ -668,7 +805,7 @@ const surveys = [
         }
     },
     { id: "housing", name: "Khảo sát nhà ở", icon: "fa-house", description: "Sẽ cập nhật từ phần nhà ở trong Form.", available: false },
-    { id: "water", name: "Khảo sát nước", icon: "fa-droplet", description: "Đã được tính trong nhóm Điện, nước, gas khi làm khảo sát điện.", available: false },
+    { id: "water", name: "Khảo sát nước", icon: "fa-droplet", description: "Sẽ cập nhật thành khảo sát nước riêng.", available: false },
     {
         id: "transport",
         name: "Khảo sát giao thông",
@@ -894,8 +1031,9 @@ function calculatePerPersonYear(tmrHouseholdYear, householdSize) {
 }
 
 function getHouseholdSize() {
-    return Number.isFinite(Number(state.profile?.household)) && Number(state.profile?.household) > 0
-        ? Number(state.profile.household)
+    const householdSize = state.profile?.soThanhVienHoGiaDinh ?? state.profile?.household;
+    return Number.isFinite(Number(householdSize)) && Number(householdSize) > 0
+        ? Number(householdSize)
         : CONFIG.householdSizeDefault;
 }
 
@@ -1199,6 +1337,48 @@ function generateConsumptionReview(totalResourceUseKgPerPersonYear, byCategory) 
     };
 }
 
+function getImprovementSuggestionLevel(result) {
+    const total = Number(result?.totalTMRPersonYear) || 0;
+    const goodThreshold = RESOURCE_BENCHMARKS.sustainableKgPerPersonYear;
+    const mediumThreshold = RESOURCE_BENCHMARKS.globalAverageKgPerPersonYear;
+    const improveThreshold = mediumThreshold * 1.5;
+
+    if (total <= goodThreshold) return "good";
+    if (total <= mediumThreshold) return "medium";
+    if (total <= improveThreshold) return "improve";
+    return "high";
+}
+
+function getImprovementSuggestions(surveyCode, result) {
+    const code = String(surveyCode || "").trim().toUpperCase();
+    const level = getImprovementSuggestionLevel(result);
+    const rules = SURVEY_SUGGESTIONS[code] || {};
+    const suggestion = rules[level] || rules.medium || rules.good || {
+        title: "Gợi ý cải thiện",
+        summary: "Hãy ưu tiên các nhóm tiêu dùng có tác động lớn nhất trong kết quả.",
+        suggestions: ["Duy trì thói quen tốt và cải thiện từng bước nhỏ trong sinh hoạt hằng ngày."]
+    };
+    const levelInfo = SUGGESTION_LEVELS[level] || SUGGESTION_LEVELS.medium;
+    const suggestions = suggestion.suggestions || [];
+
+    return {
+        level,
+        label: levelInfo.label,
+        badgeClass: levelInfo.badgeClass,
+        title: suggestion.title,
+        summary: suggestion.summary,
+        suggestions
+    };
+}
+
+function getTopImpactCategories(result, limit = 3) {
+    return Object.entries(result?.byCategory || {})
+        .filter(([key, value]) => key !== "other" && Number(value) > 0)
+        .sort((a, b) => Number(b[1]) - Number(a[1]))
+        .slice(0, limit)
+        .map(([category, value]) => ({ category, value }));
+}
+
 function buildTmrResult({ byCategory = {}, detail = {}, sourceMode = "fallback" }) {
     const householdByCategory = createEmptyCategoryTotals();
     Object.entries(byCategory).forEach(([category, value]) => {
@@ -1299,6 +1479,26 @@ function getOrCreateSessionId() {
     const generated = `session-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     sessionStorage.setItem(SESSION_ID_KEY, generated);
     return generated;
+}
+
+function createClientId(prefix) {
+    const randomValue = window.crypto?.randomUUID
+        ? window.crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    return `${prefix}-${randomValue}`;
+}
+
+function getOrCreateRespondentId() {
+    try {
+        const existing = localStorage.getItem(RESPONDENT_ID_KEY);
+        if (existing) return existing;
+
+        const generated = createClientId("respondent");
+        localStorage.setItem(RESPONDENT_ID_KEY, generated);
+        return generated;
+    } catch (error) {
+        return createClientId("respondent");
+    }
 }
 
 function getStoredHistory() {
@@ -1696,25 +1896,60 @@ function getSurveyById(surveyId) {
     return surveys.find((survey) => survey.id === surveyId);
 }
 
+function isSurveyEnabledForUsers(survey) {
+    return Boolean(survey?.available) && ACTIVE_SURVEY_IDS.includes(survey.id);
+}
+
+function showSurveySelectorStatus(message) {
+    const status = document.getElementById("surveySelectorStatus");
+    if (!status) return;
+
+    status.className = "submit-status info";
+    status.textContent = message || "";
+}
+
 function renderSurveyCards() {
     const grid = document.getElementById("surveyGrid");
     if (!grid) return;
 
-    grid.innerHTML = surveys.map((survey, index) => `
-        <article class="survey-box ${survey.available ? "" : "disabled"}" data-survey-id="${survey.id}" ${survey.available ? "" : 'aria-disabled="true"'}>
-            <span class="survey-badge">${survey.available ? `Khảo sát ${index + 1}` : "Sắp có"}</span>
+    let activeIndex = 0;
+
+    grid.innerHTML = surveys.map((survey) => {
+        const isEnabled = isSurveyEnabledForUsers(survey);
+        if (isEnabled) activeIndex += 1;
+
+        return `
+        <article
+            class="survey-box ${isEnabled ? "" : "disabled"}"
+            data-survey-id="${survey.id}"
+            role="button"
+            ${isEnabled ? 'tabindex="0"' : 'aria-disabled="true" tabindex="-1"'}
+        >
+            <span class="survey-badge">${isEnabled ? `Khảo sát ${activeIndex}` : "Sắp ra mắt"}</span>
             <i class="fas ${survey.icon}"></i>
             <h3>${survey.name}</h3>
             ${survey.description ? `<p>${survey.description}</p>` : ""}
         </article>
-    `).join("");
+    `;
+    }).join("");
 
     grid.querySelectorAll(".survey-box").forEach((card) => {
-        card.addEventListener("click", () => {
+        const openCardSurvey = () => {
             const surveyId = card.dataset.surveyId;
             const survey = getSurveyById(surveyId);
-            if (!survey || !survey.available) return;
+            if (!isSurveyEnabledForUsers(survey)) {
+                showSurveySelectorStatus("Khảo sát này sẽ được mở trong thời gian tới.");
+                return;
+            }
+            showSurveySelectorStatus("");
             startSurvey(surveyId);
+        };
+
+        card.addEventListener("click", openCardSurvey);
+        card.addEventListener("keydown", (event) => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+            event.preventDefault();
+            openCardSurvey();
         });
     });
 }
@@ -1799,7 +2034,7 @@ function renderQuestion(question, surveyId) {
                                     min="0"
                                     step="any"
                                     inputmode="decimal"
-                                    value="0"
+                                    placeholder="${option.value === "bill" ? "Nhập số tiền điện" : "Nhập số kWh"}"
                                     ${index === 0 ? "required" : "disabled"}
                                 >
                                 <span>${option.unit}</span>
@@ -1810,11 +2045,74 @@ function renderQuestion(question, surveyId) {
                 </div>
             </div>
         `;
+    } else if (question.type === "food-distance-choice") {
+        html += `
+            <div class="consumption-choice" data-food-distance-choice>
+                <div class="consumption-tabs" role="radiogroup" aria-label="Cách nhập khoảng cách mua thực phẩm">
+                    <label class="consumption-option active">
+                        <input type="radio" name="food_distance_method" value="km" checked required>
+                        <span class="consumption-option-icon"><i class="fas fa-route"></i></span>
+                        <span>
+                            <strong>Nhập theo km</strong>
+                            <small>Khoảng cách di chuyển</small>
+                        </span>
+                        <i class="fas fa-circle-check consumption-check"></i>
+                    </label>
+                    <label class="consumption-option">
+                        <input type="radio" name="food_distance_method" value="phut" required>
+                        <span class="consumption-option-icon"><i class="fas fa-clock"></i></span>
+                        <span>
+                            <strong>Nhập theo phút</strong>
+                            <small>Thời gian di chuyển</small>
+                        </span>
+                        <i class="fas fa-circle-check consumption-check"></i>
+                    </label>
+                </div>
+                <div class="consumption-panels">
+                    <div class="consumption-panel active" data-food-distance-panel="km">
+                        <label class="input-label" for="food_distance_km">Khoảng cách mua thực phẩm</label>
+                        <div class="input-with-unit">
+                            <input
+                                id="food_distance_km"
+                                type="number"
+                                class="consumption-value"
+                                name="food_distance_km"
+                                min="0"
+                                step="any"
+                                inputmode="decimal"
+                                placeholder="Nhập số km"
+                                required
+                            >
+                            <span>km</span>
+                        </div>
+                        <p class="conversion-preview" data-food-distance-preview></p>
+                    </div>
+                    <div class="consumption-panel" data-food-distance-panel="phut">
+                        <label class="input-label" for="food_distance_minutes">Thời gian đi mua thực phẩm</label>
+                        <div class="input-with-unit">
+                            <input
+                                id="food_distance_minutes"
+                                type="number"
+                                class="consumption-value"
+                                name="food_distance_minutes"
+                                min="0"
+                                step="any"
+                                inputmode="decimal"
+                                placeholder="Nhập số phút"
+                                disabled
+                            >
+                            <span>phút</span>
+                        </div>
+                        <p class="conversion-preview" data-food-distance-preview></p>
+                    </div>
+                </div>
+            </div>
+        `;
     } else if (question.type === "grid") {
         html += `<div class="grid-container">${question.items.map((item) => `
             <div class="grid-row">
                 <span>${item.label}</span>
-                <input type="number" class="smart-number" name="${namePrefix}_${item.code}" min="0" step="any" inputmode="decimal" value="0">
+                <input type="number" class="smart-number" name="${namePrefix}_${item.code}" min="0" step="any" inputmode="decimal" placeholder="Nhập số lượng">
             </div>
         `).join("")}</div>`;
     }
@@ -1830,12 +2128,20 @@ function bindSmartNumberInputs(scope) {
                 input.value = "";
             }
         });
+    });
+}
 
-        input.addEventListener("blur", () => {
-            if (input.classList.contains("smart-number") && input.value.trim() === "") {
-                input.value = "0";
-            }
-        });
+function bindUserInputTracking(scope) {
+    scope.querySelectorAll("input, select, textarea").forEach((field) => {
+        if (field.dataset.inputTrackingBound === "true") return;
+
+        const markEdited = () => {
+            field.dataset.userEdited = "true";
+        };
+
+        field.addEventListener("input", markEdited);
+        field.addEventListener("change", markEdited);
+        field.dataset.inputTrackingBound = "true";
     });
 }
 
@@ -1899,6 +2205,66 @@ function bindElectricityChoice(scope) {
     });
 }
 
+function bindFoodDistanceChoice(scope) {
+    scope.querySelectorAll("[data-food-distance-choice]").forEach((choice) => {
+        const radios = Array.from(choice.querySelectorAll('input[name="food_distance_method"]'));
+        const options = Array.from(choice.querySelectorAll(".consumption-option"));
+        const panels = Array.from(choice.querySelectorAll("[data-food-distance-panel]"));
+
+        const updatePreview = (panel) => {
+            const input = panel.querySelector(".consumption-value");
+            const preview = panel.querySelector("[data-food-distance-preview]");
+            if (!input || !preview) return;
+
+            const amount = Number(input.value) || 0;
+            const mode = panel.dataset.foodDistancePanel;
+
+            if (amount <= 0) {
+                preview.textContent = "";
+                return;
+            }
+
+            if (mode === "phut") {
+                const estimatedKm = estimateFoodTripDistanceKm("phut", null, amount);
+                preview.textContent = `Ước tính khoảng ${formatNumber(estimatedKm, 1)} km`;
+                return;
+            }
+
+            preview.textContent = "";
+        };
+
+        const activateMode = (mode, shouldFocus = false) => {
+            options.forEach((option) => {
+                const radio = option.querySelector('input[type="radio"]');
+                option.classList.toggle("active", radio?.value === mode);
+            });
+
+            panels.forEach((panel) => {
+                const isActive = panel.dataset.foodDistancePanel === mode;
+                const input = panel.querySelector(".consumption-value");
+                panel.classList.toggle("active", isActive);
+                if (input) {
+                    input.disabled = !isActive;
+                    input.required = isActive;
+                    if (isActive && shouldFocus) input.focus();
+                }
+                updatePreview(panel);
+            });
+        };
+
+        radios.forEach((radio) => {
+            radio.addEventListener("change", () => activateMode(radio.value, true));
+        });
+
+        panels.forEach((panel) => {
+            const input = panel.querySelector(".consumption-value");
+            if (input) input.addEventListener("input", () => updatePreview(panel));
+        });
+
+        activateMode(radios.find((radio) => radio.checked)?.value || "km");
+    });
+}
+
 function renderSurveyQuestions(survey) {
     const surveyTitle = document.getElementById("surveyTitle");
     const surveyMeta = document.getElementById("surveyMeta");
@@ -1924,7 +2290,9 @@ function renderSurveyQuestions(survey) {
 
     surveyForm.reset();
     bindElectricityChoice(dynamicQuestions);
+    bindFoodDistanceChoice(dynamicQuestions);
     bindSmartNumberInputs(dynamicQuestions);
+    bindUserInputTracking(dynamicQuestions);
 }
 
 function collectProfileData() {
@@ -1932,19 +2300,20 @@ function collectProfileData() {
     const formData = new FormData(form);
 
     return {
-        fullname: String(formData.get("fullname") || "").trim(),
-        age: String(formData.get("age") || "").trim(),
-        gender: String(formData.get("gender") || "").trim(),
-        household: String(formData.get("household") || "").trim(),
-        province: String(formData.get("province") || "").trim(),
-        district: String(formData.get("district") || "").trim(),
-        ward: String(formData.get("ward") || "").trim()
+        hoTen: String(formData.get("fullname") || "").trim(),
+        doTuoi: String(formData.get("age") || "").trim(),
+        gioiTinh: String(formData.get("gender") || "").trim(),
+        soThanhVienHoGiaDinh: String(formData.get("household") || "").trim(),
+        thanhPho: String(formData.get("thanhPho") || "").trim(),
+        xa: String(formData.get("xa") || "").trim(),
+        maThanhPho: String(formData.get("maThanhPho") || "").trim(),
+        maXa: String(formData.get("maXa") || "").trim()
     };
 }
 
 function startSurvey(surveyId) {
     const survey = getSurveyById(surveyId);
-    if (!survey) return;
+    if (!isSurveyEnabledForUsers(survey)) return;
 
     const profileForm = document.getElementById("profileForm");
     if (!state.profile) {
@@ -1992,33 +2361,30 @@ function renderResult(result, survey) {
 
     if (!resultLead || !resultSurveyName || !resultTotal || !resultReviewCard || !resultSuggestionsCard) return;
 
-    const sessionResult = buildSessionResult(result, survey.id);
-    const review = generateConsumptionReview(sessionResult.totalTMRPersonYear, sessionResult.byCategory);
-    const badgeLabels = {
-        good: "Tiêu dùng tương đối bền vững",
-        medium: "Cần cải thiện",
-        high: "Chưa bền vững"
-    };
+    const surveyCode = getSurveyCodeForSurvey(survey);
+    const improvement = getImprovementSuggestions(surveyCode, result);
+    const topCategories = getTopImpactCategories(result);
 
+    resultLead.className = "";
     resultLead.textContent = "";
     resultSurveyName.textContent = survey.name;
-    resultTotal.textContent = formatKgPerPersonYear(sessionResult.totalTMRPersonYear);
+    resultTotal.textContent = formatKgPerPersonYear(result.totalTMRPersonYear);
     const resultTotalUnit = resultTotal.nextElementSibling;
     if (resultTotalUnit) {
-        resultTotalUnit.textContent = `≈ ${formatNumber(sessionResult.totalTMRPersonYearTon, 2)} tấn/người/năm`;
+        resultTotalUnit.textContent = `≈ ${formatNumber(result.totalTMRPersonYearTon, 2)} tấn/người/năm`;
     }
 
     resultReviewCard.innerHTML = `
         <div class="resource-card-head">
-            <span class="resource-status-badge ${escapeHtml(review.level)}">${escapeHtml(badgeLabels[review.level] || review.title)}</span>
+            <span class="resource-status-badge ${escapeHtml(improvement.badgeClass)}">${escapeHtml(improvement.label)}</span>
             <h4>Nhận xét</h4>
         </div>
-        <h3>${escapeHtml(review.title)}</h3>
-        <p>${escapeHtml(review.summary)}</p>
+        <h3>${escapeHtml(improvement.title)}</h3>
+        <p>${escapeHtml(improvement.summary)}</p>
     `;
 
-    const topCategoryMarkup = review.suggestions.length
-        ? review.suggestions.map((item, index) => `
+    const topCategoryMarkup = topCategories.length
+        ? topCategories.map((item, index) => `
             <li>
                 <span>${index + 1}. ${escapeHtml(categoryLabels[item.category] || item.category)}</span>
                 <strong>${escapeHtml(formatKgPerPersonYear(item.value))}</strong>
@@ -2026,9 +2392,9 @@ function renderResult(result, survey) {
         `).join("")
         : '<li><span>Chưa có nhóm tiêu dùng nào có dữ liệu đủ lớn để xếp hạng.</span><strong>0 kg/người/năm</strong></li>';
 
-    const suggestionMarkup = review.suggestions.length
-        ? review.suggestions.map((item) => `<li>${escapeHtml(item.text)}</li>`).join("")
-        : "<li>Hãy hoàn thành thêm các nhóm khảo sát để hệ thống đưa ra gợi ý cụ thể hơn.</li>";
+    const suggestionMarkup = improvement.suggestions.length
+        ? improvement.suggestions.map((text) => `<li>${escapeHtml(text)}</li>`).join("")
+        : "<li>Hãy duy trì thói quen tốt và cải thiện từng bước nhỏ trong sinh hoạt hằng ngày.</li>";
 
     resultSuggestionsCard.innerHTML = `
         <div class="resource-card-head">
@@ -2054,82 +2420,320 @@ function renderResult(result, survey) {
     }
 }
 
-function formDataToObject(formData) {
-    const data = {};
+function setResultSubmissionStatus(type, message) {
+    const resultLead = document.getElementById("resultLead");
+    if (!resultLead) return;
 
-    formData.forEach((value, key) => {
-        if (Object.prototype.hasOwnProperty.call(data, key)) {
-            data[key] = Array.isArray(data[key]) ? data[key].concat(value) : [data[key], value];
-        } else {
-            data[key] = value;
+    resultLead.className = `result-submit-status ${type || ""}`.trim();
+    resultLead.textContent = message || "";
+}
+
+function shouldSkipFieldValue(field, value) {
+    if (value === null || value === undefined) return true;
+    if (typeof value === "string" && value.trim() === "") return true;
+    return field.type === "number" && value === "0" && field.dataset.userEdited !== "true";
+}
+
+function getSurveyCodeForSurvey(survey) {
+    return survey?.surveyCode || SURVEY_CODE_BY_ID[survey?.id] || "";
+}
+
+function compactSubmissionObject(value) {
+    if (Array.isArray(value)) {
+        const compactArray = value
+            .map((item) => compactSubmissionObject(item))
+            .filter((item) => item !== "" && item !== null && item !== undefined);
+        return compactArray.length ? compactArray : undefined;
+    }
+
+    if (value && typeof value === "object") {
+        const compactObject = {};
+        Object.entries(value).forEach(([key, itemValue]) => {
+            const compactValue = compactSubmissionObject(itemValue);
+            if (compactValue !== "" && compactValue !== null && compactValue !== undefined) {
+                compactObject[key] = compactValue;
+            }
+        });
+        return Object.keys(compactObject).length ? compactObject : undefined;
+    }
+
+    if (typeof value === "string") {
+        const trimmed = value.trim();
+        return trimmed === "" ? undefined : trimmed;
+    }
+
+    return value;
+}
+
+function getFieldsByName(form, name) {
+    if (!form) return [];
+    return Array.from(form.elements).filter((field) => field.name === name);
+}
+
+function getTypedValue(form, name, options = {}) {
+    const field = getFieldsByName(form, name).find((item) => item.type !== "radio" && item.type !== "checkbox");
+    if (!field || field.disabled) return undefined;
+
+    const value = typeof field.value === "string" ? field.value.trim() : field.value;
+    if (shouldSkipFieldValue(field, value)) return undefined;
+
+    if (options.number) {
+        const numericValue = Number(value);
+        return Number.isFinite(numericValue) ? numericValue : undefined;
+    }
+
+    return value;
+}
+
+function estimateFoodTripDistanceKm(method, distanceKm, durationMinutes) {
+    if (method === "km") {
+        return Number.isFinite(Number(distanceKm)) ? Number(distanceKm) : undefined;
+    }
+
+    if (method === "phut" && Number.isFinite(Number(durationMinutes))) {
+        return (Number(durationMinutes) / 60) * AVERAGE_FOOD_TRIP_SPEED_KMH;
+    }
+
+    return undefined;
+}
+
+function getChoiceValues(form, name, otherName = "") {
+    const values = [];
+    getFieldsByName(form, name).forEach((field) => {
+        if (!field.checked) return;
+        if (field.value === "other") {
+            const otherValue = otherName ? getTypedValue(form, otherName) : "";
+            if (otherValue) values.push(otherValue);
+            return;
         }
+        values.push(field.value);
+    });
+    return values;
+}
+
+function getChoiceValue(form, name, otherName = "", options = {}) {
+    const field = getFieldsByName(form, name).find((item) => item.checked);
+    if (!field) return undefined;
+
+    if (field.defaultChecked && field.dataset.userEdited !== "true" && !options.includeDefault) {
+        return undefined;
+    }
+
+    if (field.value === "other") {
+        return otherName ? getTypedValue(form, otherName) : undefined;
+    }
+
+    return field.value;
+}
+
+function buildCommonSheetData() {
+    const profile = state.profile || collectProfileData();
+    return compactSubmissionObject({
+        hoTen: profile.hoTen,
+        doTuoi: profile.doTuoi,
+        gioiTinh: profile.gioiTinh,
+        soThanhVienHoGiaDinh: profile.soThanhVienHoGiaDinh,
+        thanhPho: profile.thanhPho,
+        xa: profile.xa,
+        maThanhPho: profile.maThanhPho,
+        maXa: profile.maXa
+    }) || {};
+}
+
+function buildElectricitySheetData(form) {
+    const soDienMoiThang = getTypedValue(form, "electricity_monthly_kwh", { number: true });
+    const tienDienMoiThang = getTypedValue(form, "electricity_electric_bill", { number: true });
+    const cachNhapDien = getChoiceValue(form, "electricity_consumption_basis", "", {
+        includeDefault: soDienMoiThang !== undefined || tienDienMoiThang !== undefined
+    });
+    const soLuongThietBi = {};
+    const thietBiSuDung = [];
+    const deviceFields = [
+        ["electricity_devices_tv", "tivi", "Tivi"],
+        ["electricity_devices_fridge", "tuLanh", "Tủ lạnh"],
+        ["electricity_devices_aircon", "mayLanh", "Máy lạnh"],
+        ["electricity_devices_phone", "dienThoai", "Điện thoại"],
+        ["electricity_devices_laptop", "laptop", "Laptop"],
+        ["electricity_devices_microwave", "loViSong", "Lò vi sóng"],
+        ["electricity_devices_stove", "bepDienLoNuong", "Bếp điện và lò nướng"],
+        ["electricity_devices_washer", "mayGiat", "Máy giặt"]
+    ];
+
+    deviceFields.forEach(([fieldName, key, label]) => {
+        const quantity = getTypedValue(form, fieldName, { number: true });
+        if (quantity === undefined) return;
+        soLuongThietBi[key] = quantity;
+        if (quantity > 0) thietBiSuDung.push(label);
     });
 
-    return data;
+    return compactSubmissionObject({
+        nguonNangLuong: getChoiceValues(form, "electricity_energy_sources", "electricity_energy_sources_other"),
+        mucSuDungGas: getChoiceValue(form, "electricity_gas_usage", "electricity_gas_usage_other"),
+        cachNhapDien,
+        soDienMoiThang,
+        tienDienMoiThang,
+        thietBiSuDung,
+        soLuongThietBi,
+        bienPhapTietKiemNangLuong: getTypedValue(form, "electricity_saving_habits")
+    }) || {};
 }
 
-function buildSubmissionPayload(formData, result) {
-    const payload = new URLSearchParams();
-    const submittedAt = new Date().toISOString();
-    const responseData = formDataToObject(formData);
+function buildFoodSheetData(form) {
+    const phuongThucNhapKhoangCachThucPham = getChoiceValue(form, "food_distance_method", "", { includeDefault: true });
+    const khoangCachMuaThucPhamKm = phuongThucNhapKhoangCachThucPham === "km"
+        ? getTypedValue(form, "food_distance_km", { number: true })
+        : undefined;
+    const thoiGianDiMuaThucPhamPhut = phuongThucNhapKhoangCachThucPham === "phut"
+        ? getTypedValue(form, "food_distance_minutes", { number: true })
+        : undefined;
+    const khoangCachUocTinhKm = estimateFoodTripDistanceKm(
+        phuongThucNhapKhoangCachThucPham,
+        khoangCachMuaThucPhamKm,
+        thoiGianDiMuaThucPhamPhut
+    );
+    const khoiLuongTieuThu = {
+        thitHeoKgTuan: getTypedValue(form, "food_weekly_food_pork", { number: true }),
+        thitBoKgTuan: getTypedValue(form, "food_weekly_food_beef", { number: true }),
+        thitGiaCamKgTuan: getTypedValue(form, "food_weekly_food_chicken", { number: true }),
+        suaLitTuan: getTypedValue(form, "food_weekly_food_milk", { number: true }),
+        caHaiSanKgTuan: getTypedValue(form, "food_weekly_food_fish", { number: true }),
+        rauCuKgTuan: getTypedValue(form, "food_weekly_food_vegetable", { number: true }),
+        gaoKgThang: getTypedValue(form, "food_weekly_food_rice", { number: true })
+    };
+    const soLanChonMonAnNgoai = {
+        monThitHeoLanTuan: getTypedValue(form, "food_eatout_choices_pork", { number: true }),
+        monThitBoLanTuan: getTypedValue(form, "food_eatout_choices_beef", { number: true }),
+        monThitGiaCamLanTuan: getTypedValue(form, "food_eatout_choices_chicken", { number: true }),
+        monCaHaiSanLanTuan: getTypedValue(form, "food_eatout_choices_fish", { number: true }),
+        monSuaLanTuan: getTypedValue(form, "food_eatout_choices_milk", { number: true }),
+        monRauCuLanTuan: getTypedValue(form, "food_eatout_choices_vegetable", { number: true }),
+        monComTrangLanTuan: getTypedValue(form, "food_eatout_choices_rice", { number: true })
+    };
 
-    if (state.profile) {
-        Object.entries(state.profile).forEach(([key, value]) => payload.append(key, value));
+    return compactSubmissionObject({
+        thucPhamChinh: getChoiceValues(form, "food_meal_habit", "food_meal_habit_other"),
+        nguonGocThucPham: getChoiceValues(form, "food_food_source", "food_food_source_other"),
+        phuongThucNhapKhoangCachThucPham,
+        khoangCachMuaThucPhamKm,
+        thoiGianDiMuaThucPhamPhut,
+        khoangCachUocTinhKm,
+        khoiLuongTieuThu,
+        anThitDo: {
+            thitHeoKgTuan: khoiLuongTieuThu.thitHeoKgTuan,
+            thitBoKgTuan: khoiLuongTieuThu.thitBoKgTuan
+        },
+        anThitGiaCam: khoiLuongTieuThu.thitGiaCamKgTuan,
+        anCaHaiSan: khoiLuongTieuThu.caHaiSanKgTuan,
+        anRauCu: khoiLuongTieuThu.rauCuKgTuan,
+        anSuaTrung: khoiLuongTieuThu.suaLitTuan,
+        phamViDatDoAnOnline: getChoiceValue(form, "food_delivery_range"),
+        loaiDoAnOnline: getChoiceValues(form, "food_delivery_type", "food_delivery_type_other"),
+        tanSuatDatDoAnOnline: getChoiceValue(form, "food_delivery_times"),
+        tanSuatAnNgoai: getChoiceValue(form, "food_eatout_times"),
+        soLanChonMonAnNgoai,
+        cheDoAnChay: getTypedValue(form, "food_vegetarian"),
+        thucPhamHuuCoDiaPhuong: getTypedValue(form, "food_organic")
+    }) || {};
+}
+
+function buildFashionSheetData(form) {
+    const soLuongQuanAoMoiNam = getTypedValue(form, "fashion_annual_purchase_clothes", { number: true });
+    const soLuongGiayDepMoiNam = getTypedValue(form, "fashion_annual_purchase_shoes", { number: true });
+    const loaiSanPhamThoiTrang = [];
+    const luaChonMuaSam = getChoiceValues(form, "fashion_shopping_style", "fashion_shopping_style_other");
+
+    if (soLuongQuanAoMoiNam !== undefined && soLuongQuanAoMoiNam > 0) loaiSanPhamThoiTrang.push("Quần áo");
+    if (soLuongGiayDepMoiNam !== undefined && soLuongGiayDepMoiNam > 0) loaiSanPhamThoiTrang.push("Giày dép");
+
+    return compactSubmissionObject({
+        loaiSanPhamThoiTrang,
+        soLuongQuanAoMoiNam,
+        soLuongGiayDepMoiNam,
+        coMuaDoCu: getTypedValue(form, "fashion_used_items"),
+        luaChonMuaSam,
+        cachXuLyQuanAoCu: luaChonMuaSam.filter((value) => /sửa|tái sử dụng|second-hand/i.test(value))
+    }) || {};
+}
+
+function buildSurveyAnswerSheetData(form, surveyId) {
+    if (surveyId === "electricity") return buildElectricitySheetData(form);
+    if (surveyId === "food") return buildFoodSheetData(form);
+    if (surveyId === "fashion") return buildFashionSheetData(form);
+    return {};
+}
+
+function buildGoogleSheetData(form, survey) {
+    return compactSubmissionObject({
+        ...buildCommonSheetData(),
+        ...buildSurveyAnswerSheetData(form, survey?.id)
+    }) || {};
+}
+
+function getResultNumber(value) {
+    if (typeof value === "number") {
+        return Number.isFinite(value) ? value : undefined;
     }
 
-    payload.append("submitted_at", submittedAt);
-    payload.append("submission_id", `${deviceSessionId}-${Date.now()}`);
-    payload.append("device_session_id", deviceSessionId);
-    payload.append("survey_id", state.selectedSurveyId);
-    payload.append("survey_name", state.selectedSurveyName);
-    payload.append("result_total", result?.totalTMRPersonYear ?? "");
-    payload.append("result_total_tmr_household_year", result?.totalTMRHouseholdYear ?? "");
-    payload.append("result_total_tmr_person_year", result?.totalTMRPersonYear ?? "");
-    payload.append("result_total_tmr_person_year_ton", result?.totalTMRPersonYearTon ?? "");
-    payload.append("result_source_mode", result?.sourceMode ?? "");
-    payload.append("mi_source_label", result?.sourceMode === "external" ? state.miSource.label : "Bảng hệ số MIT/TMR");
-    payload.append("mi_source_detail", state.miSource.detail || "");
-    payload.append("result_by_category_json", JSON.stringify(result?.byCategory ?? {}));
-    payload.append("result_by_category_household_year_json", JSON.stringify(result?.byCategoryHouseholdYear ?? {}));
-    payload.append("result_detail_json", JSON.stringify(result?.detail ?? {}));
-    payload.append("result_evaluation_json", JSON.stringify(result?.evaluation ?? {}));
-    payload.append("result_breakdown_json", JSON.stringify(result?.breakdown ?? []));
-    payload.append("response_json", JSON.stringify(responseData));
-    payload.append("profile_json", JSON.stringify(state.profile ?? {}));
-    payload.append("user_agent", navigator.userAgent || "");
-    formData.forEach((value, key) => payload.append(key, value));
-
-    return payload;
-}
-
-async function submitToGoogleScript(formData, result) {
-    try {
-        await fetch(scriptURL, {
-            method: "POST",
-            body: buildSubmissionPayload(formData, result),
-            mode: "no-cors"
-        });
-        return { configured: true, success: true };
-    } catch (error) {
-        console.error("Submit failed:", error);
-        return { configured: true, success: false };
+    if (typeof value === "string") {
+        const normalized = value.trim().replace(/\./g, "").replace(",", ".");
+        const parsed = Number(normalized);
+        return Number.isFinite(parsed) ? parsed : undefined;
     }
+
+    return undefined;
 }
 
-async function submitToDataSheet(formData, result) {
-    if (!DATA_SCRIPT_URL) {
+function buildGoogleSheetResult(result, surveyCode) {
+    const evaluation = result?.evaluation || {};
+    const improvement = getImprovementSuggestions(surveyCode, result);
+    const totalKgPersonYear = getResultNumber(result?.totalTMRPersonYear);
+    const totalTonPersonYear = getResultNumber(result?.totalTMRPersonYearTon);
+    const topImpactCategories = getTopImpactCategories(result).map((item) => {
+        const label = categoryLabels[item.category] || item.category;
+        return `${label}: ${formatKgPerPersonYear(getResultNumber(item.value))}`;
+    });
+
+    return compactSubmissionObject({
+        chiSoTieuDungTaiNguyen: totalKgPersonYear,
+        donViChiSoTieuDungTaiNguyen: "kg/người/năm",
+        tmr: totalKgPersonYear,
+        totalKgPersonYear,
+        totalTonPersonYear,
+        xepLoai: improvement.label || evaluation.label || "",
+        nhanXet: improvement.summary || evaluation.message || "",
+        mucGoiY: improvement.level || "",
+        tieuDeGoiY: improvement.title || "",
+        goiYCaiThien: improvement.suggestions || [],
+        nhomAnhHuongNhieuNhat: topImpactCategories
+    }) || {};
+}
+
+async function submitSurveyToGoogleSheet(surveyCode, data, result) {
+    const normalizedSurveyCode = String(surveyCode || "").trim().toUpperCase();
+
+    if (!GOOGLE_SHEET_WEB_APP_URL || !normalizedSurveyCode) {
         return { configured: false, success: false };
     }
 
+    const payload = {
+        secretKey: GOOGLE_SHEET_SECRET_KEY,
+        surveyCode: normalizedSurveyCode,
+        respondentId,
+        pageUrl: window.location.href,
+        source: GOOGLE_SHEET_SOURCE,
+        data,
+        result
+    };
+
     try {
-        await fetch(DATA_SCRIPT_URL, {
+        await fetch(GOOGLE_SHEET_WEB_APP_URL, {
             method: "POST",
-            body: buildSubmissionPayload(formData, result),
+            body: JSON.stringify(payload),
             mode: "no-cors"
         });
         return { configured: true, success: true };
     } catch (error) {
-        console.error("Data sheet submit failed:", error);
+        console.error("Google Sheet submit failed:", error);
         return { configured: true, success: false };
     }
 }
@@ -2174,8 +2778,8 @@ async function handleSurveySubmit(event) {
     state.history.unshift({
         surveyId: survey.id,
         surveyName: survey.name,
-        fullname: state.profile?.fullname || "Người dùng",
-        location: [state.profile?.ward, state.profile?.district, state.profile?.province].filter(Boolean).join(", "),
+        fullname: state.profile?.hoTen || "Người dùng",
+        location: [state.profile?.xa, state.profile?.thanhPho].filter(Boolean).join(", "),
         total: result.totalTMRPersonYear.toFixed(1),
         totalTMRHouseholdYear: result.totalTMRHouseholdYear,
         totalTMRPersonYear: result.totalTMRPersonYear,
@@ -2189,167 +2793,147 @@ async function handleSurveySubmit(event) {
     persistHistory();
     renderHistory();
 
+    const surveyCode = getSurveyCodeForSurvey(survey);
+    const googleSheetData = buildGoogleSheetData(form, survey);
+    const googleSheetResult = buildGoogleSheetResult(result, surveyCode);
+
     submitButton.disabled = false;
     submitButton.innerHTML = 'Hoàn thành khảo sát <i class="fa fa-paper-plane"></i>';
     setActiveStep("step-result");
+    setResultSubmissionStatus("pending", "Đang gửi khảo sát...");
 
-    Promise.all([
-        submitToGoogleScript(formData, result),
-        submitToDataSheet(formData, result)
-    ]).catch((error) => {
-        console.error("Background sheet submit failed:", error);
-    });
+    submitSurveyToGoogleSheet(surveyCode, googleSheetData, googleSheetResult)
+        .then((submitResult) => {
+            if (submitResult.success) {
+                setResultSubmissionStatus("success", "Đã gửi khảo sát thành công.");
+                return;
+            }
+            setResultSubmissionStatus("error", "Chưa thể gửi khảo sát. Vui lòng kiểm tra kết nối và thử lại.");
+        })
+        .catch((error) => {
+            console.error("Background sheet submit failed:", error);
+            setResultSubmissionStatus("error", "Chưa thể gửi khảo sát. Vui lòng kiểm tra kết nối và thử lại.");
+        });
 }
 
-async function loadAdministrativeData() {
+function normalizeLocationData2025(rawData) {
+    if (!Array.isArray(rawData)) return [];
+
+    return rawData.map((entry) => {
+        const maThanhPho = String(entry.maThanhPho || entry.code || "").trim();
+        const thanhPho = String(entry.thanhPho || entry.tenThanhPho || entry.name || "").trim();
+        const xaPhuong = Array.isArray(entry.xaPhuong) ? entry.xaPhuong : [];
+
+        return {
+            maThanhPho,
+            thanhPho,
+            xaPhuong: xaPhuong.map((ward) => ({
+                maXa: String(ward.maXa || ward.code || "").trim(),
+                tenXa: String(ward.tenXa || ward.xa || ward.name || "").trim()
+            })).filter((ward) => ward.tenXa)
+        };
+    }).filter((entry) => entry.thanhPho);
+}
+
+function resetWardSelect(wardSelect, placeholder = "Vui lòng chọn Tỉnh/Thành phố trước") {
+    wardSelect.innerHTML = `<option value="">${placeholder}</option>`;
+    wardSelect.value = "";
+    wardSelect.disabled = true;
+    wardSelect.required = false;
+    wardSelect.classList.remove("location-select-hidden");
+}
+
+function setManualWardInput(isEnabled, placeholder = "Nhập Xã/Phường") {
+    const wardManualInput = document.getElementById("wardManual");
+    const wardCodeInput = document.getElementById("wardCode");
+    if (!wardManualInput) return;
+
+    wardManualInput.classList.toggle("hidden", !isEnabled);
+    wardManualInput.disabled = !isEnabled;
+    wardManualInput.required = isEnabled;
+    wardManualInput.value = "";
+    wardManualInput.placeholder = placeholder;
+    if (wardCodeInput) wardCodeInput.value = "";
+}
+
+function showManualWardInput(wardSelect, placeholder) {
+    wardSelect.classList.add("location-select-hidden");
+    wardSelect.disabled = true;
+    wardSelect.required = false;
+    setManualWardInput(true, placeholder);
+}
+
+function loadAdministrativeData() {
     const provinceSelect = document.getElementById("province");
-    const districtSelect = document.getElementById("district");
     const wardSelect = document.getElementById("ward");
-    if (!provinceSelect || !districtSelect || !wardSelect) return;
+    const provinceCodeInput = document.getElementById("provinceCode");
+    const wardCodeInput = document.getElementById("wardCode");
+    if (!provinceSelect || !wardSelect) return;
 
-    const apiProviders = [
-        {
-            id: "open-api",
-            provinceUrl: "https://provinces.open-api.vn/api/p/",
-            provinceDetailUrl: (code) => `https://provinces.open-api.vn/api/p/${code}?depth=2`,
-            districtDetailUrl: (code) => `https://provinces.open-api.vn/api/d/${code}?depth=2`,
-            normalizeProvinces: (data) => data.map((province) => ({
-                code: province.code,
-                name: province.name
-            })),
-            normalizeDistricts: (data) => (data.districts || []).map((district) => ({
-                code: district.code,
-                name: district.name
-            })),
-            normalizeWards: (data) => (data.wards || []).map((ward) => ({
-                code: ward.code || ward.name,
-                name: ward.name
-            }))
-        },
-        {
-            id: "esgoo",
-            provinceUrl: "https://esgoo.net/api-tinhthanh/1/0.htm",
-            provinceDetailUrl: (code) => `https://esgoo.net/api-tinhthanh/2/${code}.htm`,
-            districtDetailUrl: (code) => `https://esgoo.net/api-tinhthanh/3/${code}.htm`,
-            normalizeProvinces: (data) => (data.data || []).map((province) => ({
-                code: province.id,
-                name: province.full_name || province.name
-            })),
-            normalizeDistricts: (data) => (data.data || []).map((district) => ({
-                code: district.id,
-                name: district.full_name || district.name
-            })),
-            normalizeWards: (data) => (data.data || []).map((ward) => ({
-                code: ward.id,
-                name: ward.full_name || ward.name
-            }))
-        }
-    ];
+    const locations = normalizeLocationData2025(window.LOCATION_DATA_2025);
 
-    async function fetchJsonWithTimeout(url, timeoutMs = 8000) {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    provinceSelect.innerHTML = '<option value="">Chọn Tỉnh/Thành phố...</option>';
+    resetWardSelect(wardSelect);
+    setManualWardInput(false);
 
-        try {
-            const response = await fetch(url, { signal: controller.signal });
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            return await response.json();
-        } finally {
-            clearTimeout(timeoutId);
-        }
-    }
+    if (provinceCodeInput) provinceCodeInput.value = "";
+    if (wardCodeInput) wardCodeInput.value = "";
 
-    function setOptions(select, placeholder, items, sourceId = "") {
-        select.innerHTML = `<option value="">${placeholder}</option>`;
-        items.forEach((item) => {
-            const option = document.createElement("option");
-            option.value = item.name;
-            option.textContent = item.name;
-            option.dataset.code = item.code;
-            option.dataset.source = sourceId;
-            select.appendChild(option);
-        });
-        select.disabled = false;
-    }
-
-    function setManualFallback() {
-        provinceSelect.innerHTML = '<option value="Không xác định">Không xác định</option>';
-        districtSelect.innerHTML = '<option value="Không xác định">Không xác định</option>';
-        wardSelect.innerHTML = '<option value="Không xác định">Không xác định</option>';
+    if (locations.length === 0) {
+        provinceSelect.innerHTML = '<option value="">Chưa có dữ liệu địa chỉ 2025</option>';
         provinceSelect.disabled = false;
-        districtSelect.disabled = false;
-        wardSelect.disabled = false;
+        resetWardSelect(wardSelect, "Cần nạp dữ liệu địa chỉ 2025 trước");
+        setManualWardInput(false);
+        return;
     }
 
-    async function loadWithProviders(loader) {
-        for (const provider of apiProviders) {
-            try {
-                const items = await loader(provider);
-                if (items.length > 0) {
-                    return { provider, items };
-                }
-            } catch (error) {
-                continue;
-            }
-        }
-        return null;
-    }
+    locations.forEach((location, index) => {
+        const option = document.createElement("option");
+        option.value = location.thanhPho;
+        option.textContent = location.thanhPho;
+        option.dataset.code = location.maThanhPho;
+        option.dataset.index = String(index);
+        provinceSelect.appendChild(option);
+    });
+    provinceSelect.disabled = false;
 
-    try {
-        const result = await loadWithProviders(async (provider) => {
-            const data = await fetchJsonWithTimeout(provider.provinceUrl);
-            return provider.normalizeProvinces(data);
-        });
-        if (!result) throw new Error("No province data");
-        setOptions(provinceSelect, "Chọn tỉnh / thành...", result.items, result.provider.id);
-    } catch (error) {
-        setManualFallback();
-    }
-
-    provinceSelect.addEventListener("change", async function handleProvinceChange() {
+    provinceSelect.addEventListener("change", function handleProvinceChange() {
         clearInlineError(this);
-        const selectedOption = this.options[this.selectedIndex];
-        const code = selectedOption?.dataset.code;
-        const sourceId = selectedOption?.dataset.source;
-        const provider = apiProviders.find((item) => item.id === sourceId);
-        districtSelect.innerHTML = '<option value="">Chọn quận / huyện...</option>';
-        districtSelect.disabled = !code || !provider;
-        wardSelect.innerHTML = '<option value="">Chọn phường / xã...</option>';
-        wardSelect.disabled = true;
-        if (!code || !provider) return;
+        if (provinceCodeInput) provinceCodeInput.value = "";
+        if (wardCodeInput) wardCodeInput.value = "";
+        resetWardSelect(wardSelect);
+        setManualWardInput(false);
 
-        try {
-            const data = await fetchJsonWithTimeout(provider.provinceDetailUrl(code));
-            const districts = provider.normalizeDistricts(data);
-            if (!districts.length) throw new Error("No district data");
-            setOptions(districtSelect, "Chọn quận / huyện...", districts, provider.id);
-        } catch (error) {
-            districtSelect.innerHTML = '<option value="Không xác định">Không xác định</option>';
-            districtSelect.disabled = false;
-            wardSelect.innerHTML = '<option value="Không xác định">Không xác định</option>';
-            wardSelect.disabled = false;
+        const selectedOption = this.options[this.selectedIndex];
+        const selectedIndex = Number(selectedOption?.dataset.index);
+        const location = Number.isInteger(selectedIndex) ? locations[selectedIndex] : null;
+        if (!location) return;
+
+        if (provinceCodeInput) provinceCodeInput.value = location.maThanhPho;
+
+        if (!location.xaPhuong.length) {
+            showManualWardInput(wardSelect, "Nhập Xã/Phường theo địa chỉ hiện tại");
+            return;
         }
+
+        wardSelect.innerHTML = '<option value="">Chọn Xã/Phường...</option>';
+        wardSelect.required = true;
+        location.xaPhuong.forEach((ward) => {
+            const option = document.createElement("option");
+            option.value = ward.tenXa;
+            option.textContent = ward.tenXa;
+            option.dataset.code = ward.maXa;
+            wardSelect.appendChild(option);
+        });
+        wardSelect.disabled = false;
     });
 
-    districtSelect.addEventListener("change", async function handleDistrictChange() {
+    wardSelect.addEventListener("change", function handleWardChange() {
         clearInlineError(this);
-        const selectedOption = this.options[this.selectedIndex];
-        const code = selectedOption?.dataset.code;
-        const sourceId = selectedOption?.dataset.source;
-        const provider = apiProviders.find((item) => item.id === sourceId);
-        wardSelect.innerHTML = '<option value="">Chọn phường / xã...</option>';
-        wardSelect.disabled = !code || !provider;
-        if (!code || !provider) return;
+        if (!wardCodeInput) return;
 
-        try {
-            const data = await fetchJsonWithTimeout(provider.districtDetailUrl(code));
-            const wards = provider.normalizeWards(data);
-            if (!wards.length) throw new Error("No ward data");
-            setOptions(wardSelect, "Chọn phường / xã...", wards, provider.id);
-        } catch (error) {
-            wardSelect.innerHTML = '<option value="Không xác định">Không xác định</option>';
-            wardSelect.disabled = false;
-        }
+        const selectedOption = this.options[this.selectedIndex];
+        wardCodeInput.value = selectedOption?.dataset.code || "";
     });
 }
 
@@ -2407,6 +2991,7 @@ function bindEvents() {
 
     surveyForm.addEventListener("submit", handleSurveySubmit);
     bindSmartNumberInputs(document);
+    bindUserInputTracking(document);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -2418,7 +3003,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadExternalMiConfig().finally(() => {
         if (state.selectedSurveyId) {
             const survey = getSurveyById(state.selectedSurveyId);
-            if (survey) {
+            if (isSurveyEnabledForUsers(survey)) {
                 renderSurveyQuestions(survey);
             }
         }
