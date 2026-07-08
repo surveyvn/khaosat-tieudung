@@ -10,7 +10,7 @@
     <link rel="manifest" href="site.webmanifest">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260626-2">
+    <link rel="stylesheet" href="style.css?v=20260704-ux-10">
 </head>
 <body class="profile-step">
     <div class="eco-backdrop" aria-hidden="true">
@@ -21,15 +21,28 @@
     <main class="app-shell">
         <section class="main-card">
             <div class="calculator-content full-width">
+                <div class="app-brandbar" aria-label="EcoImpact Tracker">
+                    <div class="app-wordmark">
+                        <span class="leaf-logo-mark" aria-hidden="true"><i class="fas fa-leaf"></i></span>
+                        <span>
+                            <strong>EcoImpact Tracker</strong>
+                            <small>Nguyen Tat Thanh University</small>
+                        </span>
+                    </div>
+                    <div class="app-brand-meta" aria-label="Thông tin khảo sát">
+                        <span>TMR</span>
+                        <span>Điện</span>
+                        <span>Thực phẩm</span>
+                        <span>Thời trang</span>
+                    </div>
+                </div>
+
                 <header class="hero">
                     <div class="hero-intro">
                         <div class="hero-copy-block">
-                            <div class="eco-brand">
-                                <span class="eco-brand-mark"><i class="fas fa-leaf"></i></span>
-                                <span>
-                                    <strong>EcoImpact Tracker</strong>
-                                    <small>NTTU</small>
-                                </span>
+                            <div class="hero-kicker">
+                                <span><i class="fas fa-leaf"></i></span>
+                                <strong>NTTU Sustainable Consumption Lab</strong>
                             </div>
                             <p class="eyebrow">Khảo sát • Đo lường • Thay đổi</p>
                             <h1>Hiểu dấu chân tiêu dùng,<br><span>sống xanh hơn mỗi ngày.</span></h1>
@@ -42,16 +55,34 @@
                                 <span><i class="fas fa-shield-heart"></i> Dữ liệu riêng tư</span>
                                 <span><i class="fas fa-seedling"></i> Hướng tới Net Zero</span>
                             </div>
+                            <div class="hero-metric-strip" aria-label="Tổng quan khảo sát">
+                                <span>
+                                    <strong>03</strong>
+                                    <small>khảo sát đang mở</small>
+                                </span>
+                                <span>
+                                    <strong>TMR</strong>
+                                    <small>kg/người/năm</small>
+                                </span>
+                            </div>
                         </div>
                         <div class="hero-visual" aria-hidden="true">
-                            <div class="eco-orbit orbit-one"></div>
-                            <div class="eco-orbit orbit-two"></div>
-                            <div class="eco-planet">
-                                <i class="fas fa-earth-asia"></i>
-                                <span class="planet-leaf"><i class="fas fa-leaf"></i></span>
+                            <div class="impact-compass">
+                                <span class="impact-ring ring-a"></span>
+                                <span class="impact-ring ring-b"></span>
+                                <span class="impact-ring ring-c"></span>
+                                <div class="impact-core">
+                                    <span class="impact-core-logo"><i class="fas fa-leaf"></i></span>
+                                    <strong>Eco</strong>
+                                    <small>Impact</small>
+                                </div>
+                                <span class="impact-axis axis-top">TMR</span>
+                                <span class="impact-axis axis-right">Thực phẩm</span>
+                                <span class="impact-axis axis-bottom">Thời trang</span>
+                                <span class="impact-axis axis-left">Điện</span>
                             </div>
-                            <span class="eco-stat stat-one"><strong>TMR</strong><small>kg/người/năm</small></span>
-                            <span class="eco-stat stat-two"><i class="fas fa-arrow-trend-down"></i><small>Giảm tác động</small></span>
+                            <span class="eco-stat stat-one"><strong>3</strong><small>khảo sát mở</small></span>
+                            <span class="eco-stat stat-two"><i class="fas fa-arrow-trend-down"></i><small>Gợi ý hành động</small></span>
                         </div>
                     </div>
 
@@ -144,11 +175,11 @@
                     </div>
 
                     <div class="question-group">
-                        <label class="question-label" for="ward">Xã/Phường</label>
+                        <label class="question-label" for="ward">Xã/Phường/Đặc khu</label>
                         <select id="ward" name="xa" required disabled>
                             <option value="">Vui lòng chọn Tỉnh/Thành phố trước</option>
                         </select>
-                        <input id="wardManual" class="location-manual hidden" type="text" name="xa" placeholder="Nhập Xã/Phường" disabled>
+                        <input id="wardManual" class="location-manual hidden" type="text" name="xa" placeholder="Nhập Xã/Phường/Đặc khu" disabled>
                         <input id="wardCode" type="hidden" name="maXa">
                     </div>
 
@@ -237,7 +268,6 @@
                         <div class="resource-suggestions-card" id="resultSuggestionsCard"></div>
                     </div>
                     <div id="resultBreakdown" class="result-breakdown"></div>
-                    <div class="comparison-card hidden" id="comparisonCard"></div>
                 </div>
 
                 <section class="history-panel compact">
@@ -260,6 +290,6 @@
     </main>
 
     <script src="locations-2025.js?v=20260703-1"></script>
-    <script src="script.js?v=20260703-result-1"></script>
+    <script src="script.js?v=20260704-ux-4"></script>
 </body>
 </html>
