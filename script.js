@@ -6,7 +6,6 @@ const SHEET_SOURCE_URL = "https://docs.google.com/spreadsheets/d/14Zo1oQT0--dw7L
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/14Zo1oQT0--dw7L5OJ46OGVivvcxqFViqJzTMhkrrXXg/export?format=csv";
 const MI_CONFIG_ENDPOINT = `${scriptURL}?action=mi-config`;
 const HISTORY_STORAGE_KEY = "nttu-survey-history";
-const SESSION_ID_KEY = "nttu-device-session-id";
 const RESPONDENT_ID_KEY = "nttu-respondent-id";
 const ACTIVE_SURVEY_IDS = ["electricity", "food", "fashion"];
 
@@ -37,7 +36,6 @@ const state = {
     }
 };
 
-const deviceSessionId = getOrCreateSessionId();
 const respondentId = getOrCreateRespondentId();
 
 const tmrCategoryKeys = ["device", "food", "transport", "energy", "clothing", "entertainment", "other"];
@@ -811,7 +809,7 @@ const surveys = [
         name: "Khảo sát giao thông",
         icon: "fa-bus",
         description: "Nhập quãng đường di chuyển trung bình mỗi tuần để quy đổi thành dấu chân vật chất hằng năm.",
-        available: true,
+        available: false,
         groups: [
             {
                 title: "Quãng đường di chuyển hằng tuần",
@@ -864,7 +862,7 @@ const surveys = [
         name: "Khảo sát giải trí",
         icon: "fa-film",
         description: "Nhập thời lượng giải trí trung bình mỗi tuần để quy đổi thành kg/người/năm.",
-        available: true,
+        available: false,
         groups: [
             {
                 title: "Hoạt động giải trí hằng tuần",
@@ -928,7 +926,7 @@ const stepLabels = {
     "step-profile": "Bước 1 - Thông tin người tham gia",
     "step-selector": "Bước 2 - Chọn khảo sát",
     "step-questionnaire": "Bước 3 - Trả lời câu hỏi",
-    "step-result": "Bước 4 - Kết quả, so sánh và lịch sử của bạn"
+    "step-result": "Bước 4 - Kết quả và lịch sử của bạn"
 };
 
 function setActiveStep(stepId) {
@@ -1472,15 +1470,6 @@ function buildSessionResult(currentResult = null, currentSurveyId = "") {
     });
 }
 
-function getOrCreateSessionId() {
-    const existing = sessionStorage.getItem(SESSION_ID_KEY);
-    if (existing) return existing;
-
-    const generated = `session-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-    sessionStorage.setItem(SESSION_ID_KEY, generated);
-    return generated;
-}
-
 function createClientId(prefix) {
     const randomValue = window.crypto?.randomUUID
         ? window.crypto.randomUUID()
@@ -1920,9 +1909,10 @@ function renderSurveyCards() {
 
         return `
         <article
-            class="survey-box ${isEnabled ? "" : "disabled"}"
+            class="survey-box ${isEnabled ? "enabled" : "disabled"}"
             data-survey-id="${survey.id}"
             role="button"
+            aria-label="${isEnabled ? `Mở ${survey.name}` : `${survey.name} sắp ra mắt`}"
             ${isEnabled ? 'tabindex="0"' : 'aria-disabled="true" tabindex="-1"'}
         >
             <span class="survey-badge">${isEnabled ? `Khảo sát ${activeIndex}` : "Sắp ra mắt"}</span>
@@ -1954,6 +1944,17 @@ function renderSurveyCards() {
     });
 }
 
+function getNumberPlaceholder(question, surveyId) {
+    const label = `${question?.label || ""} ${surveyId || ""}`.toLowerCase();
+
+    if (label.includes("kwh") || label.includes("điện")) return "Nhập số kWh";
+    if (label.includes("tiền") || label.includes("chi phí")) return "Nhập chi phí";
+    if (label.includes("km") || label.includes("khoảng cách")) return "Nhập số km";
+    if (label.includes("phút") || label.includes("thời gian")) return "Nhập số phút";
+    if (label.includes("tuổi")) return "Nhập tuổi";
+    return "Nhập số lượng";
+}
+
 function renderQuestion(question, surveyId) {
     const namePrefix = `${surveyId}_${question.id}`;
     let html = '<div class="question-group">';
@@ -1965,9 +1966,9 @@ function renderQuestion(question, surveyId) {
     html += `<label class="question-label">${question.label}</label>`;
 
     if (question.type === "number") {
-        html += `<input type="number" name="${namePrefix}" min="${question.min ?? 0}" step="${question.step ?? "any"}" inputmode="decimal" ${question.required ? "required" : ""}>`;
+        html += `<input type="number" name="${namePrefix}" min="${question.min ?? 0}" step="${question.step ?? "any"}" inputmode="decimal" placeholder="${getNumberPlaceholder(question, surveyId)}" ${question.required ? "required" : ""}>`;
     } else if (question.type === "text") {
-        html += `<input type="text" name="${namePrefix}" ${question.required ? "required" : ""}>`;
+        html += `<input type="text" name="${namePrefix}" placeholder="Nhập câu trả lời" ${question.required ? "required" : ""}>`;
     } else if (question.type === "radio" || question.type === "radio-other") {
         html += `<div class="options-list">${question.options.map((option) => `
             <label class="option-item-custom">
@@ -2048,6 +2049,13 @@ function renderQuestion(question, surveyId) {
     } else if (question.type === "food-distance-choice") {
         html += `
             <div class="consumption-choice" data-food-distance-choice>
+                <div class="consumption-choice-head">
+                    <span class="eco-mini-icon"><i class="fas fa-location-dot"></i></span>
+                    <div>
+                        <strong>Chỉ cần nhập một thông tin</strong>
+                        <p>Nếu không nhớ khoảng cách, hãy nhập thời gian di chuyển. Hệ thống sẽ quy đổi theo tốc độ trung bình ước tính.</p>
+                    </div>
+                </div>
                 <div class="consumption-tabs" role="radiogroup" aria-label="Cách nhập khoảng cách mua thực phẩm">
                     <label class="consumption-option active">
                         <input type="radio" name="food_distance_method" value="km" checked required>
@@ -2186,6 +2194,11 @@ function bindElectricityChoice(scope) {
                 if (input) {
                     input.disabled = !isActive;
                     input.required = isActive;
+                    if (!isActive) {
+                        input.value = "";
+                        delete input.dataset.userEdited;
+                        clearInlineError(input);
+                    }
                     if (isActive && shouldFocus) input.focus();
                 }
                 updatePreview(panel);
@@ -2246,6 +2259,11 @@ function bindFoodDistanceChoice(scope) {
                 if (input) {
                     input.disabled = !isActive;
                     input.required = isActive;
+                    if (!isActive) {
+                        input.value = "";
+                        delete input.dataset.userEdited;
+                        clearInlineError(input);
+                    }
                     if (isActive && shouldFocus) input.focus();
                 }
                 updatePreview(panel);
@@ -2328,28 +2346,6 @@ function startSurvey(surveyId) {
     setActiveStep("step-questionnaire");
 }
 
-function getComparisonSummary(surveyId, currentTotal) {
-    const relevant = state.history
-        .filter((entry) => entry.surveyId === surveyId)
-        .map(getEntryTotalPersonYear)
-        .filter((value) => Number.isFinite(value) && value > 0);
-
-    if (relevant.length === 0) {
-        return {
-            average: null,
-            diff: null,
-            count: 0
-        };
-    }
-
-    const average = relevant.reduce((sum, value) => sum + value, 0) / relevant.length;
-    return {
-        average,
-        diff: currentTotal - average,
-        count: relevant.length
-    };
-}
-
 function renderResult(result, survey) {
     const resultLead = document.getElementById("resultLead");
     const resultSurveyName = document.getElementById("resultSurveyName");
@@ -2357,7 +2353,6 @@ function renderResult(result, survey) {
     const resultBreakdown = document.getElementById("resultBreakdown");
     const resultReviewCard = document.getElementById("resultReviewCard");
     const resultSuggestionsCard = document.getElementById("resultSuggestionsCard");
-    const comparisonCard = document.getElementById("comparisonCard");
 
     if (!resultLead || !resultSurveyName || !resultTotal || !resultReviewCard || !resultSuggestionsCard) return;
 
@@ -2413,10 +2408,6 @@ function renderResult(result, survey) {
     if (resultBreakdown) {
         resultBreakdown.innerHTML = "";
         resultBreakdown.hidden = true;
-    }
-    if (comparisonCard) {
-        comparisonCard.innerHTML = "";
-        comparisonCard.hidden = true;
     }
 }
 
@@ -2750,8 +2741,13 @@ async function handleSurveySubmit(event) {
     if (!survey) return;
 
     const formData = new FormData(form);
+    const resetSubmitButton = () => {
+        submitButton.disabled = false;
+        submitButton.innerHTML = 'Hoàn thành khảo sát <i class="fa fa-paper-plane"></i>';
+    };
+
     submitButton.disabled = true;
-    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi...';
     if (submitStatus) {
         submitStatus.className = "submit-status";
         submitStatus.textContent = "";
@@ -2766,8 +2762,7 @@ async function handleSurveySubmit(event) {
         renderResult(result, survey);
     } catch (error) {
         console.error("TMR calculation failed:", error);
-        submitButton.disabled = false;
-        submitButton.innerHTML = 'Hoàn thành khảo sát <i class="fa fa-paper-plane"></i>';
+        resetSubmitButton();
         if (submitStatus) {
             submitStatus.className = "submit-status error";
             submitStatus.textContent = "Không thể tính dấu chân vật chất. Vui lòng tải lại trang và thử lại.";
@@ -2797,8 +2792,6 @@ async function handleSurveySubmit(event) {
     const googleSheetData = buildGoogleSheetData(form, survey);
     const googleSheetResult = buildGoogleSheetResult(result, surveyCode);
 
-    submitButton.disabled = false;
-    submitButton.innerHTML = 'Hoàn thành khảo sát <i class="fa fa-paper-plane"></i>';
     setActiveStep("step-result");
     setResultSubmissionStatus("pending", "Đang gửi khảo sát...");
 
@@ -2813,7 +2806,8 @@ async function handleSurveySubmit(event) {
         .catch((error) => {
             console.error("Background sheet submit failed:", error);
             setResultSubmissionStatus("error", "Chưa thể gửi khảo sát. Vui lòng kiểm tra kết nối và thử lại.");
-        });
+        })
+        .finally(resetSubmitButton);
 }
 
 function normalizeLocationData2025(rawData) {
@@ -2843,7 +2837,7 @@ function resetWardSelect(wardSelect, placeholder = "Vui lòng chọn Tỉnh/Thà
     wardSelect.classList.remove("location-select-hidden");
 }
 
-function setManualWardInput(isEnabled, placeholder = "Nhập Xã/Phường") {
+function setManualWardInput(isEnabled, placeholder = "Nhập Xã/Phường/Đặc khu") {
     const wardManualInput = document.getElementById("wardManual");
     const wardCodeInput = document.getElementById("wardCode");
     if (!wardManualInput) return;
@@ -2912,11 +2906,11 @@ function loadAdministrativeData() {
         if (provinceCodeInput) provinceCodeInput.value = location.maThanhPho;
 
         if (!location.xaPhuong.length) {
-            showManualWardInput(wardSelect, "Nhập Xã/Phường theo địa chỉ hiện tại");
+            showManualWardInput(wardSelect, "Nhập Xã/Phường/Đặc khu theo địa chỉ hiện tại");
             return;
         }
 
-        wardSelect.innerHTML = '<option value="">Chọn Xã/Phường...</option>';
+        wardSelect.innerHTML = '<option value="">Chọn Xã/Phường/Đặc khu...</option>';
         wardSelect.required = true;
         location.xaPhuong.forEach((ward) => {
             const option = document.createElement("option");
