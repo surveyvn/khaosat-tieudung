@@ -2855,7 +2855,10 @@ async function handleSurveySubmit(event) {
 
             const adviceHtml = escapeHtml(
                 nlpResult.advice || ""
-            ).replace(/\n/g, "<br>");
+            )
+                .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                .replace(/\n\n/g, "<br><br>")
+                .replace(/\n/g, "<br>");
 
             resultSuggestionsCard.insertAdjacentHTML(
                 "beforeend",
