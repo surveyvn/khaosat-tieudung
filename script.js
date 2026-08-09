@@ -9,6 +9,8 @@ const HISTORY_STORAGE_KEY = "nttu-survey-history";
 const RESPONDENT_ID_KEY = "nttu-respondent-id";
 const ACTIVE_SURVEY_IDS = ["electricity", "food", "fashion"];
 
+const ENERGY_NLP_API_URL = "https://ecoimpact-energy-backend.onrender.com/analyze";
+
 const SURVEY_CODE_BY_ID = {
     food: "TP",
     electricity: "DIEN",
