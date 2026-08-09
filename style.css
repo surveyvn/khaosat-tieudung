@@ -2563,3 +2563,61 @@ textarea:focus-visible,
         white-space: normal;
     }
 }
+
+/* ===== NLP + RAG Personalized Advice ===== */
+
+.resource-suggestions-card .suggestion-block:last-child {
+    margin-top: 24px;
+    padding: 22px;
+    border-radius: 20px;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(7, 83, 63, 0.08),
+            rgba(183, 220, 74, 0.08)
+        );
+    border: 1px solid rgba(7, 83, 63, 0.16);
+    box-shadow: 0 14px 34px rgba(5, 67, 49, 0.08);
+}
+
+.resource-suggestions-card .suggestion-block:last-child h5 {
+    color: var(--primary-dark);
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
+.resource-suggestions-card .suggestion-block:last-child p {
+    margin: 6px 0 12px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(46, 125, 50, 0.09);
+    color: var(--primary-dark);
+    line-height: 1.6;
+}
+
+.resource-suggestions-card .suggestion-block:last-child > div {
+    color: var(--text);
+    line-height: 1.75;
+}
+
+.resource-suggestions-card .suggestion-block:last-child strong {
+    color: var(--primary-dark);
+}
+
+.resource-suggestions-card .suggestion-block:last-child ul {
+    margin: 10px 0 0;
+    padding-left: 22px;
+}
+
+.resource-suggestions-card .suggestion-block:last-child li {
+    margin-bottom: 7px;
+    line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+    .resource-suggestions-card .suggestion-block:last-child {
+        padding: 16px;
+        border-radius: 16px;
+    }
+}
