@@ -2571,6 +2571,46 @@ function buildElectricitySheetData(form) {
     }) || {};
 }
 
+async function requestEnergyNlpAdvice(data) {
+    const deviceCounts = data.soLuongThietBi || {};
+
+    const payload = {
+        so_thanh_vien: data.soThanhVienHoGiaDinh || null,
+        nguon_nang_luong: data.nguonNangLuong || null,
+        so_dien_moi_thang: data.soDienMoiThang || null,
+        tien_dien_moi_thang: data.tienDienMoiThang || null,
+        thiet_bi_su_dung: data.thietBiSuDung || null,
+
+        so_may_lanh: Number(deviceCounts.mayLanh || 0),
+        so_tivi: Number(deviceCounts.tivi || 0),
+        so_tu_lanh: Number(deviceCounts.tuLanh || 0),
+        so_laptop: Number(deviceCounts.laptop || 0),
+        so_may_giat: Number(deviceCounts.mayGiat || 0),
+
+        bien_phap_hien_tai:
+            data.bienPhapTietKiemNangLuong || ""
+    };
+
+    const response = await fetch(
+        ENERGY_NLP_API_URL,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error(
+            `Energy NLP API error: ${response.status}`
+        );
+    }
+
+    return await response.json();
+}
+
 function buildFoodSheetData(form) {
     const phuongThucNhapKhoangCachThucPham = getChoiceValue(form, "food_distance_method", "", { includeDefault: true });
     const khoangCachMuaThucPhamKm = phuongThucNhapKhoangCachThucPham === "km"
@@ -2793,7 +2833,68 @@ async function handleSurveySubmit(event) {
     const surveyCode = getSurveyCodeForSurvey(survey);
     const googleSheetData = buildGoogleSheetData(form, survey);
     const googleSheetResult = buildGoogleSheetResult(result, surveyCode);
+    
+    if (survey.id === "electricity") {
+    requestEnergyNlpAdvice(googleSheetData)
+        .then((nlpResult) => {
+            console.log("Kết quả NLP + RAG:", nlpResult);
 
+            const resultSuggestionsCard =
+                document.getElementById("resultSuggestionsCard");
+
+            if (!resultSuggestionsCard) return;
+
+            const sourcesMarkup = (nlpResult.sources || [])
+                .map((source) => `
+                    <li>
+                        ${escapeHtml(source.title || "")}
+                        - ${escapeHtml(source.source || "")}
+                    </li>
+                `)
+                .join("");
+
+            const adviceHtml = escapeHtml(
+                nlpResult.advice || ""
+            ).replace(/\n/g, "<br>");
+
+            resultSuggestionsCard.insertAdjacentHTML(
+                "beforeend",
+                `
+                <div class="suggestion-block">
+                    <h5>Tư vấn cá nhân hóa bằng NLP + RAG</h5>
+
+                    <p>
+                        <strong>Phân tích NLP:</strong>
+                        ${escapeHtml(nlpResult.nlp_result || "")}
+                    </p>
+
+                    <div>
+                        ${adviceHtml}
+                    </div>
+
+                    ${
+                        sourcesMarkup
+                            ? `
+                            <div style="margin-top: 16px;">
+                                <strong>Nguồn tham khảo:</strong>
+                                <ul>
+                                    ${sourcesMarkup}
+                                </ul>
+                            </div>
+                            `
+                            : ""
+                    }
+                </div>
+                `
+            );
+        })
+        .catch((error) => {
+            console.error(
+                "Không thể lấy tư vấn NLP + RAG:",
+                error
+            );
+        });
+}
     setActiveStep("step-result");
     setResultSubmissionStatus("pending", "Đang gửi khảo sát...");
 
