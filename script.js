@@ -2939,70 +2939,7 @@ async function handleSurveySubmit(event) {
         });
 }
     
-    if (survey.id === "electricity") {
-    requestEnergyNlpAdvice(googleSheetData)
-        .then((nlpResult) => {
-            console.log("Kết quả NLP + RAG:", nlpResult);
-
-            const resultSuggestionsCard =
-                document.getElementById("resultSuggestionsCard");
-
-            if (!resultSuggestionsCard) return;
-
-            const sourcesMarkup = (nlpResult.sources || [])
-                .map((source) => `
-                    <li>
-                        ${escapeHtml(source.title || "")}
-                        - ${escapeHtml(source.source || "")}
-                    </li>
-                `)
-                .join("");
-
-            const adviceHtml = escapeHtml(
-                nlpResult.advice || ""
-            )
-                .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-                .replace(/\n\n/g, "<br><br>")
-                .replace(/\n/g, "<br>");
-
-            resultSuggestionsCard.insertAdjacentHTML(
-                "beforeend",
-                `
-                <div class="suggestion-block">
-                    <h5>Tư vấn cá nhân hóa bằng NLP + RAG</h5>
-
-                    <p>
-                        <strong>Phân tích NLP:</strong>
-                        ${escapeHtml(nlpResult.nlp_result || "")}
-                    </p>
-
-                    <div>
-                        ${adviceHtml}
-                    </div>
-
-                    ${
-                        sourcesMarkup
-                            ? `
-                            <div style="margin-top: 16px;">
-                                <strong>Nguồn tham khảo:</strong>
-                                <ul>
-                                    ${sourcesMarkup}
-                                </ul>
-                            </div>
-                            `
-                            : ""
-                    }
-                </div>
-                `
-            );
-        })
-        .catch((error) => {
-            console.error(
-                "Không thể lấy tư vấn NLP + RAG:",
-                error
-            );
-        });
-}
+    
     setActiveStep("step-result");
     setResultSubmissionStatus("pending", "Đang gửi khảo sát...");
 
