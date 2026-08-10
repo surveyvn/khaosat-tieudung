@@ -2611,6 +2611,46 @@ async function requestEnergyNlpAdvice(data) {
     return await response.json();
 }
 
+async function requestEnergyNlpAdvice(data) {
+    const deviceCounts = data.soLuongThietBi || {};
+
+    const payload = {
+        so_thanh_vien: data.soThanhVienHoGiaDinh || null,
+        nguon_nang_luong: data.nguonNangLuong || null,
+        so_dien_moi_thang: data.soDienMoiThang || null,
+        tien_dien_moi_thang: data.tienDienMoiThang || null,
+        thiet_bi_su_dung: data.thietBiSuDung || null,
+
+        so_may_lanh: Number(deviceCounts.mayLanh || 0),
+        so_tivi: Number(deviceCounts.tivi || 0),
+        so_tu_lanh: Number(deviceCounts.tuLanh || 0),
+        so_laptop: Number(deviceCounts.laptop || 0),
+        so_may_giat: Number(deviceCounts.mayGiat || 0),
+
+        bien_phap_hien_tai:
+            data.bienPhapTietKiemNangLuong || ""
+    };
+
+    const response = await fetch(
+        ENERGY_NLP_API_URL,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error(
+            `Energy NLP API error: ${response.status}`
+        );
+    }
+
+    return await response.json();
+}
+
 function buildFoodSheetData(form) {
     const phuongThucNhapKhoangCachThucPham = getChoiceValue(form, "food_distance_method", "", { includeDefault: true });
     const khoangCachMuaThucPhamKm = phuongThucNhapKhoangCachThucPham === "km"
