@@ -84,18 +84,20 @@ function renderQuestion(question, surveyId) {
     }
 
     const namePrefix = `${surveyId}_${question.id}`;
+    const inputId = `question_${namePrefix}`;
+    const isAddressQuestion = surveyId === "fashion" && question.id === "address";
     let html = '<div class="question-group">';
 
     if (question.note) {
         html += `<div class="note-highlight">${question.note}</div>`;
     }
 
-    html += `<label class="question-label">${question.label}</label>`;
+    html += `<label class="question-label" for="${inputId}">${question.label}</label>`;
 
     if (question.type === "number") {
         html += `<input type="number" name="${namePrefix}" min="${question.min ?? 0}" step="${question.step ?? "any"}" inputmode="decimal" placeholder="${getNumberPlaceholder(question, surveyId)}" ${question.required ? "required" : ""}>`;
     } else if (question.type === "text") {
-        html += `<input type="text" name="${namePrefix}" placeholder="Nhập câu trả lời" ${question.required ? "required" : ""}>`;
+        html += `<input id="${inputId}" type="text" name="${namePrefix}" placeholder="${isAddressQuestion ? "Nhập số nhà, đường, phường/xã, tỉnh/thành" : "Nhập câu trả lời"}" autocomplete="${isAddressQuestion ? "street-address" : "off"}" ${question.required ? "required" : ""}>`;
     } else if (question.type === "textarea") {
         html += `<textarea name="${namePrefix}" rows="3" placeholder="Nhập câu trả lời" ${question.required ? "required" : ""}></textarea>`;
     } else if (question.type === "radio" || question.type === "radio-other") {

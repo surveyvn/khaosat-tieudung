@@ -105,3 +105,10 @@ function validateForm(form) {
 
     return isValid;
 }
+
+document.addEventListener("input", (event) => {
+    const field = event.target;
+    if (!(field instanceof HTMLInputElement || field instanceof HTMLSelectElement || field instanceof HTMLTextAreaElement)) return;
+    if (!field.required || !String(field.value || "").trim()) return;
+    clearInlineError(field);
+});
