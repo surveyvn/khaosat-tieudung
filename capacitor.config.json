@@ -1,0 +1,23 @@
+{
+  "appId": "vn.ecoimpact.app",
+  "appName": "EcoImpact",
+  "webDir": "dist",
+  "backgroundColor": "#07533f",
+  "android": {
+    "backgroundColor": "#07533f",
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "launchAutoHide": true,
+      "backgroundColor": "#07533fff",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#f6fbf7",
+      "overlaysWebView": false
+    }
+  }
+}

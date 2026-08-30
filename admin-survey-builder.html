@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#07533f">
+    <title>Admin - Tạo khung khảo sát</title>
+    <link rel="shortcut icon" type="image/png" href="assets/favicon-32x32.png">
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+    <style>
+        :root {
+            --primary: #07533f;
+            --primary-soft: #e9f6ef;
+            --accent: #b7dc4a;
+            --danger: #c62828;
+            --text: #1f2933;
+            --muted: #6b7280;
+            --border: #dce8df;
+            --surface: #ffffff;
+            --page: #f5faf7;
+            --shadow: 0 24px 70px rgba(5, 67, 49, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 8% 0%, rgba(183, 220, 74, 0.22), transparent 28%),
+                radial-gradient(circle at 88% 22%, rgba(7, 83, 63, 0.12), transparent 32%),
+                var(--page);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        button,
+        input,
+        textarea,
+        select {
+            font: inherit;
+        }
+
+        button {
+            min-height: 42px;
+            border: 0;
+            border-radius: 12px;
+            padding: 10px 14px;
+            color: #fff;
+            background: var(--primary);
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        button.secondary {
+            color: var(--primary);
+            background: var(--primary-soft);
+            border: 1px solid #cfe5d8;
+        }
+
+        button.danger {
+            color: var(--danger);
+            background: #fff0f0;
+            border: 1px solid #f0caca;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            min-height: 44px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 11px 12px;
+            color: var(--text);
+            background: #fbfdfb;
+        }
+
+        textarea {
+            min-height: 92px;
+            resize: vertical;
+            line-height: 1.5;
+        }
+
+        label {
+            display: grid;
+            gap: 7px;
+            color: var(--muted);
+            font-size: 0.86rem;
+            font-weight: 700;
+        }
+
+        label span {
+            color: var(--text);
+        }
+
+        .admin-layout {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 280px minmax(0, 1fr);
+        }
+
+        .admin-sidebar {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+            padding: 22px 18px;
+            color: #fff;
+            background:
+                radial-gradient(circle at 18% 0%, rgba(183, 220, 74, 0.18), transparent 28%),
+                linear-gradient(180deg, #043f31 0%, #07533f 62%, #032f25 100%);
+            border-right: 1px solid rgba(255, 255, 255, 0.14);
+        }
+
+        .admin-workspace {
+            min-width: 0;
+            padding: 22px;
+        }
+
+        .sidebar-brand,
+        .topbar-title {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            min-width: 0;
+        }
+
+        .sidebar-brand img,
+        .topbar-title img {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            box-shadow: 0 14px 28px rgba(7, 83, 63, 0.18);
+        }
+
+        .sidebar-brand h1,
+        .topbar-title h1 {
+            margin: 0;
+            font-size: clamp(1.25rem, 2vw, 1.75rem);
+            line-height: 1.15;
+        }
+
+        .sidebar-brand h1 {
+            color: #fff;
+        }
+
+        .topbar-title h1 {
+            color: var(--primary);
+        }
+
+        .sidebar-brand p,
+        .topbar-title p {
+            margin: 4px 0 0;
+            line-height: 1.45;
+        }
+
+        .sidebar-brand p {
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        .topbar-title p {
+            color: var(--muted);
+        }
+
+        .sidebar-nav {
+            display: grid;
+            gap: 8px;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            min-height: 44px;
+            padding: 10px 12px;
+            border-radius: 13px;
+            color: rgba(255, 255, 255, 0.84);
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-weight: 800;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            color: #053728;
+            background: var(--accent);
+        }
+
+        .sidebar-note {
+            margin-top: auto;
+            padding: 14px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.74);
+            line-height: 1.55;
+            font-size: 0.88rem;
+        }
+
+        .admin-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            margin-bottom: 16px;
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.88);
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: var(--shadow);
+        }
+
+        .admin-kicker {
+            margin: 0 0 4px;
+            color: var(--muted);
+            font-size: 0.76rem;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .admin-stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .admin-stat {
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid #dfe9e2;
+            box-shadow: 0 12px 30px rgba(5, 67, 49, 0.055);
+        }
+
+        .admin-stat span,
+        .admin-stat strong {
+            display: block;
+        }
+
+        .admin-stat span {
+            color: var(--muted);
+            font-size: 0.78rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .admin-stat strong {
+            margin-top: 6px;
+            color: var(--primary);
+            font-size: 1.55rem;
+            line-height: 1;
+        }
+
+        .existing-surveys-panel {
+            margin-bottom: 16px;
+            padding: 16px;
+            border: 1px solid #dfe9e2;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 14px 34px rgba(5, 67, 49, 0.06);
+        }
+
+        .section-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 12px;
+        }
+
+        .section-head h2 {
+            margin: 0;
+            color: var(--primary);
+            font-size: 1.08rem;
+        }
+
+        .section-head p {
+            margin: 5px 0 0;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .existing-survey-list {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .existing-survey-card {
+            width: 100%;
+            min-height: 112px;
+            display: grid;
+            align-content: start;
+            gap: 8px;
+            padding: 13px;
+            text-align: left;
+            color: var(--text);
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 10px 24px rgba(5, 67, 49, 0.04);
+        }
+
+        .existing-survey-card:hover,
+        .existing-survey-card.active {
+            color: var(--primary);
+            background: #f2faf6;
+            border-color: #b9dbc8;
+        }
+
+        .existing-survey-card strong,
+        .existing-survey-card small {
+            display: block;
+        }
+
+        .existing-survey-card strong {
+            font-size: 0.96rem;
+            line-height: 1.35;
+        }
+
+        .existing-survey-card small {
+            color: var(--muted);
+            font-weight: 700;
+            line-height: 1.45;
+        }
+
+        .survey-status-pill {
+            width: fit-content;
+            max-width: 100%;
+            padding: 5px 8px;
+            border-radius: 999px;
+            color: var(--primary);
+            background: var(--primary-soft);
+            border: 1px solid #cfe5d8;
+            font-size: 0.72rem;
+            font-weight: 900;
+        }
+
+        .survey-status-pill.draft {
+            color: #7a5c00;
+            background: #fff6d7;
+            border-color: #f0dfaa;
+        }
+
+        .admin-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 0.95fr) minmax(360px, 0.75fr);
+            gap: 18px;
+            align-items: start;
+        }
+
+        .panel {
+            border: 1px solid #dfe9e2;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.94);
+            box-shadow: 0 18px 48px rgba(5, 67, 49, 0.08);
+            overflow: hidden;
+        }
+
+        .panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 18px;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(180deg, #ffffff, #f8fcf9);
+        }
+
+        .panel-head h2,
+        .panel-head h3 {
+            margin: 0;
+            font-size: 1.08rem;
+        }
+
+        .panel-body {
+            padding: 18px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .full {
+            grid-column: 1 / -1;
+        }
+
+        .check-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 44px;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #fbfdfb;
+        }
+
+        .check-row input {
+            width: 18px;
+            min-height: 18px;
+            accent-color: var(--primary);
+        }
+
+        .builder-list {
+            display: grid;
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .group-card,
+        .question-card {
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .question-card.title-card {
+            border-color: #cfe5d8;
+            background: linear-gradient(180deg, #f2faf6, #ffffff);
+        }
+
+        .question-card.title-card .question-card-head {
+            background: #edf8f1;
+        }
+
+        .group-card-head,
+        .question-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            border-bottom: 1px solid #edf3ef;
+            background: #f8fcf9;
+        }
+
+        .group-card-head strong,
+        .question-card-head strong {
+            color: var(--primary);
+        }
+
+        .group-card-body,
+        .question-card-body {
+            display: grid;
+            gap: 14px;
+            padding: 14px;
+        }
+
+        .question-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .mini-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .mini-actions button {
+            min-height: 34px;
+            padding: 7px 10px;
+            font-size: 0.82rem;
+        }
+
+        .empty-state {
+            padding: 18px;
+            border: 1px dashed #cbdcd1;
+            border-radius: 16px;
+            color: var(--muted);
+            background: rgba(255, 255, 255, 0.62);
+            line-height: 1.55;
+        }
+
+        .preview-stack {
+            position: sticky;
+            top: 22px;
+            display: grid;
+            gap: 14px;
+        }
+
+        .survey-preview {
+            display: grid;
+            gap: 12px;
+        }
+
+        .preview-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 16px;
+            border-radius: 18px;
+            color: #fff;
+            background: linear-gradient(135deg, #043f31, #0a7558);
+        }
+
+        .preview-title h2 {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+
+        .preview-title p {
+            margin: 6px 0 0;
+            color: rgba(255, 255, 255, 0.78);
+            line-height: 1.5;
+        }
+
+        .preview-badge {
+            flex: 0 0 auto;
+            padding: 7px 10px;
+            border-radius: 999px;
+            color: var(--primary);
+            background: var(--accent);
+            font-size: 0.76rem;
+            font-weight: 900;
+        }
+
+        .preview-group {
+            padding: 14px;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: #fff;
+        }
+
+        .preview-group h3 {
+            margin: 0 0 6px;
+            font-size: 1rem;
+        }
+
+        .preview-group p {
+            margin: 0 0 12px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .preview-question {
+            padding: 12px;
+            border-radius: 14px;
+            background: #f7fbf8;
+            border: 1px solid #e2ece5;
+        }
+
+        .preview-question.title-block {
+            background: #effaf4;
+            border-color: #cfe5d8;
+            border-left: 5px solid var(--primary);
+        }
+
+        .preview-question + .preview-question {
+            margin-top: 10px;
+        }
+
+        .preview-question strong,
+        .preview-question small {
+            display: block;
+        }
+
+        .preview-question small {
+            margin-top: 5px;
+            color: var(--muted);
+            line-height: 1.45;
+        }
+
+        .export-box {
+            min-height: 280px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+            font-size: 0.85rem;
+            white-space: pre;
+        }
+
+        .status {
+            min-height: 22px;
+            margin: 10px 0 0;
+            color: var(--primary);
+            font-size: 0.88rem;
+            font-weight: 700;
+        }
+
+        @media (max-width: 980px) {
+            .admin-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-sidebar {
+                position: static;
+                height: auto;
+            }
+
+            .sidebar-note {
+                margin-top: 0;
+            }
+
+            .admin-grid,
+            .form-grid,
+            .admin-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .existing-survey-list {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .preview-stack {
+                position: static;
+            }
+
+            .admin-topbar {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .toolbar {
+                justify-content: flex-start;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .admin-workspace,
+            .admin-sidebar {
+                padding: 10px;
+            }
+
+            .admin-topbar,
+            .panel {
+                border-radius: 18px;
+            }
+
+            .panel-head,
+            .panel-body {
+                padding: 14px;
+            }
+
+            .toolbar button,
+            .mini-actions button,
+            .existing-survey-list {
+                width: 100%;
+            }
+
+            .existing-survey-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="admin-layout">
+        <aside class="admin-sidebar" aria-label="Điều hướng admin">
+            <div class="sidebar-brand">
+                <img src="assets/icon.svg" alt="">
+                <div>
+                    <h1>EcoImpact Admin</h1>
+                    <p>Survey Builder</p>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a class="active" href="#surveySettings">Cấu hình <span>01</span></a>
+                <a href="#groupList">Cấu trúc câu hỏi <span>02</span></a>
+                <a href="#surveyPreview">Xem trước <span>03</span></a>
+                <a href="#exportOutput">Xuất mã <span>04</span></a>
+            </nav>
+
+            <div class="sidebar-note">
+                Dùng trang này để tạo khung khảo sát. Sau đó copy JS object và dán vào mảng <strong>surveys</strong>.
+            </div>
+        </aside>
+
+        <section class="admin-workspace">
+            <header class="admin-topbar">
+                <div class="topbar-title">
+                    <img src="assets/icon.svg" alt="">
+                    <div>
+                        <p class="admin-kicker">Quản trị khảo sát</p>
+                        <h1>Tạo khung khảo sát</h1>
+                        <p>Thiết kế metadata, nhóm câu hỏi, tiêu đề khung và xuất cấu trúc cho app.</p>
+                    </div>
+                </div>
+                <div class="toolbar">
+                    <button type="button" class="secondary" id="loadSampleBtn">Nạp mẫu</button>
+                    <button type="button" class="secondary" id="saveDraftBtn">Lưu nháp</button>
+                    <button type="button" class="danger" id="resetBtn">Làm mới</button>
+                </div>
+            </header>
+
+            <section class="admin-stats" aria-label="Tổng quan cấu trúc khảo sát">
+                <article class="admin-stat">
+                    <span>Nhóm</span>
+                    <strong id="statGroups">0</strong>
+                </article>
+                <article class="admin-stat">
+                    <span>Câu hỏi</span>
+                    <strong id="statQuestions">0</strong>
+                </article>
+                <article class="admin-stat">
+                    <span>Tiêu đề khung</span>
+                    <strong id="statTitles">0</strong>
+                </article>
+                <article class="admin-stat">
+                    <span>Trạng thái</span>
+                    <strong id="statStatus">Nháp</strong>
+                </article>
+            </section>
+
+            <section class="existing-surveys-panel" aria-labelledby="existingSurveysTitle">
+                <div class="section-head">
+                    <div>
+                        <h2 id="existingSurveysTitle">Khảo sát hiện có</h2>
+                        <p>Bấm vào một khảo sát để nạp cấu trúc đang dùng lên khung admin và chỉnh nhanh.</p>
+                    </div>
+                </div>
+                <div id="existingSurveyList" class="existing-survey-list"></div>
+            </section>
+
+            <div class="admin-grid">
+                <section class="panel">
+                <div class="panel-head">
+                    <h2 id="surveySettings">Thông tin khảo sát</h2>
+                    <button type="button" id="addGroupBtn">Thêm nhóm</button>
+                </div>
+                <div class="panel-body">
+                    <div class="form-grid">
+                        <label>
+                            <span>Mã khảo sát</span>
+                            <input id="surveyId" type="text" placeholder="vi_du: nuoc_sinh_hoat">
+                        </label>
+                        <label>
+                            <span>Tên khảo sát</span>
+                            <input id="surveyName" type="text" placeholder="Khảo sát nước sinh hoạt">
+                        </label>
+                        <label>
+                            <span>Icon Font Awesome</span>
+                            <input id="surveyIcon" type="text" placeholder="fa-droplet">
+                        </label>
+                        <label class="check-row">
+                            <input id="surveyAvailable" type="checkbox" checked>
+                            <span>Cho phép người dùng làm khảo sát</span>
+                        </label>
+                        <label class="full">
+                            <span>Mô tả</span>
+                            <textarea id="surveyDescription" placeholder="Mô tả ngắn về mục tiêu khảo sát"></textarea>
+                        </label>
+                    </div>
+
+                    <div id="groupList" class="builder-list"></div>
+                </div>
+                </section>
+
+            <aside class="preview-stack">
+                <section class="panel">
+                    <div class="panel-head">
+                        <h3>Xem trước</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div id="surveyPreview" class="survey-preview"></div>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-head">
+                        <h3>Mã xuất ra</h3>
+                        <div class="mini-actions">
+                            <button type="button" class="secondary" id="copyJsonBtn">Copy JSON</button>
+                            <button type="button" class="secondary" id="copyJsBtn">Copy JS</button>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <textarea id="exportOutput" class="export-box" readonly></textarea>
+                        <div id="status" class="status" role="status" aria-live="polite"></div>
+                    </div>
+                </section>
+            </aside>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/data/impact-factors.js"></script>
+    <script src="js/data/surveys.js"></script>
+    <script>
+        const STORAGE_KEY = "ecoimpact-admin-survey-draft";
+
+        const questionTypes = [
+            { value: "title-block", label: "Tiêu đề khung" },
+            { value: "text", label: "Text" },
+            { value: "number", label: "Số" },
+            { value: "radio", label: "Một lựa chọn" },
+            { value: "radio-other", label: "Một lựa chọn + Khác" },
+            { value: "checkbox-other", label: "Nhiều lựa chọn + Khác" },
+            { value: "grid", label: "Bảng nhập số" },
+            { value: "electricity-choice", label: "Mẫu nhập điện" },
+            { value: "food-distance-choice", label: "Mẫu khoảng cách thực phẩm" }
+        ];
+
+        const sampleSurvey = {
+            id: "nuoc_sinh_hoat",
+            name: "Khảo sát nước sinh hoạt",
+            icon: "fa-droplet",
+            description: "Thu thập thói quen sử dụng nước trong hộ gia đình.",
+            available: false,
+            groups: [
+                {
+                    title: "Mức sử dụng nước",
+                    description: "Nhập thông tin theo trung bình mỗi tháng.",
+                    questions: [
+                        {
+                            id: "huong_dan",
+                            label: "Thông tin hóa đơn nước",
+                            type: "title-block",
+                            description: "Nếu không nhớ chính xác, hãy nhập mức ước tính gần nhất."
+                        },
+                        {
+                            id: "monthly_water",
+                            label: "Lượng nước sử dụng mỗi tháng",
+                            type: "number",
+                            min: 0,
+                            step: "any",
+                            required: true
+                        },
+                        {
+                            id: "saving_methods",
+                            label: "Gia đình có biện pháp tiết kiệm nước nào?",
+                            type: "checkbox-other",
+                            options: ["Khóa vòi khi không dùng", "Tái sử dụng nước", "Thiết bị tiết kiệm nước"],
+                            otherLabel: "Khác"
+                        }
+                    ]
+                }
+            ]
+        };
+
+        let survey = loadDraft() || createEmptySurvey();
+
+        const elements = {
+            surveyId: document.getElementById("surveyId"),
+            surveyName: document.getElementById("surveyName"),
+            surveyIcon: document.getElementById("surveyIcon"),
+            surveyAvailable: document.getElementById("surveyAvailable"),
+            surveyDescription: document.getElementById("surveyDescription"),
+            existingSurveyList: document.getElementById("existingSurveyList"),
+            groupList: document.getElementById("groupList"),
+            surveyPreview: document.getElementById("surveyPreview"),
+            exportOutput: document.getElementById("exportOutput"),
+            status: document.getElementById("status"),
+            statGroups: document.getElementById("statGroups"),
+            statQuestions: document.getElementById("statQuestions"),
+            statTitles: document.getElementById("statTitles"),
+            statStatus: document.getElementById("statStatus")
+        };
+
+        function createEmptySurvey() {
+            return {
+                id: "khao_sat_moi",
+                name: "Khảo sát mới",
+                icon: "fa-leaf",
+                description: "",
+                available: false,
+                groups: []
+            };
+        }
+
+        function createEmptyGroup() {
+            return {
+                title: "Nhóm câu hỏi mới",
+                description: "",
+                questions: []
+            };
+        }
+
+        function createEmptyQuestion() {
+            return {
+                id: `cau_hoi_${Date.now().toString(36).slice(-5)}`,
+                label: "Nội dung câu hỏi",
+                type: "text",
+                required: false,
+                options: [],
+                items: []
+            };
+        }
+
+        function createTitleBlock() {
+            return {
+                id: `tieu_de_${Date.now().toString(36).slice(-5)}`,
+                label: "Tiêu đề khung",
+                type: "title-block",
+                description: "Mô tả ngắn cho phần này"
+            };
+        }
+
+        function normalizeId(value) {
+            return String(value || "")
+                .trim()
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/đ/g, "d")
+                .replace(/[^a-z0-9]+/g, "_")
+                .replace(/^_+|_+$/g, "") || "khao_sat_moi";
+        }
+
+        function splitLines(value) {
+            return String(value || "")
+                .split(/\r?\n/)
+                .map((line) => line.trim())
+                .filter(Boolean);
+        }
+
+        function parseGridItems(value) {
+            return splitLines(value).map((line) => {
+                const parts = line.split("|").map((part) => part.trim()).filter(Boolean);
+                return {
+                    code: normalizeId(parts[0] || line),
+                    label: parts[1] || parts[0] || line
+                };
+            });
+        }
+
+        function formatGridItems(items) {
+            return (items || []).map((item) => `${item.code || ""} | ${item.label || ""}`).join("\n");
+        }
+
+        function getExistingSurveys() {
+            try {
+                if (Array.isArray(window.SURVEYS)) return window.SURVEYS;
+                return typeof surveys !== "undefined" && Array.isArray(surveys) ? surveys : [];
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function cloneWithoutFunctions(value) {
+            if (Array.isArray(value)) {
+                return value.map(cloneWithoutFunctions);
+            }
+
+            if (value && typeof value === "object") {
+                return Object.entries(value).reduce((acc, [key, item]) => {
+                    if (typeof item !== "function") {
+                        acc[key] = cloneWithoutFunctions(item);
+                    }
+                    return acc;
+                }, {});
+            }
+
+            return value;
+        }
+
+        function normalizeQuestionForBuilder(question) {
+            const cloned = cloneWithoutFunctions(question || {});
+            return {
+                ...cloned,
+                id: cloned.id || `cau_hoi_${Date.now().toString(36).slice(-5)}`,
+                label: cloned.label || "Nội dung câu hỏi",
+                type: cloned.type || "text",
+                required: Boolean(cloned.required),
+                options: Array.isArray(cloned.options) ? cloned.options : [],
+                items: Array.isArray(cloned.items) ? cloned.items : []
+            };
+        }
+
+        function normalizeSurveyForBuilder(existingSurvey) {
+            const cloned = cloneWithoutFunctions(existingSurvey || {});
+            return {
+                id: cloned.id || "khao_sat_moi",
+                name: cloned.name || "Khảo sát mới",
+                icon: cloned.icon || "fa-leaf",
+                description: cloned.description || "",
+                available: Boolean(cloned.available),
+                groups: Array.isArray(cloned.groups)
+                    ? cloned.groups.map((group) => ({
+                        title: group.title || "Nhóm câu hỏi",
+                        description: group.description || "",
+                        questions: Array.isArray(group.questions)
+                            ? group.questions.map(normalizeQuestionForBuilder)
+                            : []
+                    }))
+                    : []
+            };
+        }
+
+        function cleanQuestion(question) {
+            const cleaned = {
+                id: normalizeId(question.id),
+                label: String(question.label || "").trim() || "Nội dung câu hỏi",
+                type: question.type || "text"
+            };
+
+            if (question.type === "title-block") {
+                if (question.description) cleaned.description = String(question.description).trim();
+                if (question.note) cleaned.note = String(question.note).trim();
+                return cleaned;
+            }
+
+            if (question.required) cleaned.required = true;
+            if (question.note) cleaned.note = question.note;
+
+            if (question.type === "number") {
+                cleaned.min = question.min === "" || question.min === undefined ? 0 : Number(question.min);
+                cleaned.step = question.step || "any";
+            }
+
+            if (question.type === "radio" || question.type === "radio-other" || question.type === "checkbox-other") {
+                cleaned.options = Array.isArray(question.options) ? question.options.filter(Boolean) : [];
+                if (question.type !== "radio") cleaned.otherLabel = question.otherLabel || "Khác";
+            }
+
+            if (question.type === "grid") {
+                cleaned.items = Array.isArray(question.items)
+                    ? question.items
+                        .filter((item) => item.code && item.label)
+                        .map((item) => ({
+                            ...item,
+                            code: normalizeId(item.code),
+                            label: String(item.label || "").trim()
+                        }))
+                    : [];
+            }
+
+            if (question.type === "electricity-choice") {
+                cleaned.required = true;
+                cleaned.options = [
+                    {
+                        value: "kwh",
+                        inputId: "monthly_kwh",
+                        icon: "fa-bolt",
+                        title: "Theo điện năng",
+                        description: "Nhập số kWh trên hóa đơn điện",
+                        inputLabel: "Lượng điện trung bình mỗi tháng",
+                        unit: "kWh/tháng"
+                    },
+                    {
+                        value: "bill",
+                        inputId: "electric_bill",
+                        icon: "fa-receipt",
+                        title: "Theo tiền điện",
+                        description: "Nhập số tiền thanh toán hàng tháng",
+                        inputLabel: "Tiền điện trung bình mỗi tháng",
+                        unit: "VNĐ/tháng"
+                    }
+                ];
+            }
+
+            if (question.type === "food-distance-choice") {
+                cleaned.required = true;
+            }
+
+            return cleaned;
+        }
+
+        function buildSurvey() {
+            return {
+                id: normalizeId(elements.surveyId.value),
+                name: elements.surveyName.value.trim() || "Khảo sát mới",
+                icon: elements.surveyIcon.value.trim() || "fa-leaf",
+                description: elements.surveyDescription.value.trim(),
+                available: elements.surveyAvailable.checked,
+                groups: survey.groups.map((group) => ({
+                    title: String(group.title || "").trim() || "Nhóm câu hỏi",
+                    ...(String(group.description || "").trim() ? { description: String(group.description).trim() } : {}),
+                    questions: group.questions.map(cleanQuestion)
+                }))
+            };
+        }
+
+        function surveyToJsObject(value) {
+            const objectText = JSON.stringify(value, null, 4)
+                .replace(/"([^"]+)":/g, "$1:");
+            const calculateStub = [
+                "    calculate(formData) {",
+                "        // TODO: Viết công thức tính TMR riêng cho khảo sát này.",
+                "        return buildTmrResult({",
+                "            byCategory: { other: 0 },",
+                "            detail: { other: [] },",
+                "            sourceMode: \"fallback\"",
+                "        });",
+                "    }"
+            ].join("\n");
+
+            return objectText.replace(/\n}$/, `,\n${calculateStub}\n}`);
+        }
+
+        function renderMetadata() {
+            elements.surveyId.value = survey.id || "";
+            elements.surveyName.value = survey.name || "";
+            elements.surveyIcon.value = survey.icon || "";
+            elements.surveyDescription.value = survey.description || "";
+            elements.surveyAvailable.checked = Boolean(survey.available);
+        }
+
+        function renderExistingSurveyList() {
+            const existingSurveys = getExistingSurveys();
+            if (!existingSurveys.length) {
+                elements.existingSurveyList.innerHTML = '<div class="empty-state">Chưa đọc được danh sách khảo sát hiện có.</div>';
+                return;
+            }
+
+            elements.existingSurveyList.innerHTML = existingSurveys.map((item) => {
+                const groupCount = Array.isArray(item.groups) ? item.groups.length : 0;
+                const questionCount = Array.isArray(item.groups)
+                    ? item.groups.reduce((total, group) => total + (Array.isArray(group.questions) ? group.questions.length : 0), 0)
+                    : 0;
+                const statusClass = item.available ? "" : "draft";
+                const statusText = item.available ? "Đang mở" : "Bản nháp";
+
+                return `
+                    <button
+                        type="button"
+                        class="existing-survey-card ${item.id === survey.id ? "active" : ""}"
+                        data-existing-survey-id="${escapeHtml(item.id || "")}"
+                    >
+                        <span class="survey-status-pill ${statusClass}">${statusText}</span>
+                        <strong>${escapeHtml(item.name || item.id || "Khảo sát")}</strong>
+                        <small>${escapeHtml(item.id || "")} · ${groupCount} nhóm · ${questionCount} mục</small>
+                    </button>
+                `;
+            }).join("");
+        }
+
+        function renderGroups() {
+            if (!survey.groups.length) {
+                elements.groupList.innerHTML = '<div class="empty-state">Chưa có nhóm câu hỏi. Bấm "Thêm nhóm" để bắt đầu.</div>';
+                return;
+            }
+
+            elements.groupList.innerHTML = survey.groups.map((group, groupIndex) => `
+                <article class="group-card" data-group-index="${groupIndex}">
+                    <div class="group-card-head">
+                        <strong>Nhóm ${groupIndex + 1}</strong>
+                        <div class="mini-actions">
+                            <button type="button" class="secondary" data-action="add-title-block">Thêm tiêu đề khung</button>
+                            <button type="button" class="secondary" data-action="add-question">Thêm câu hỏi</button>
+                            <button type="button" class="danger" data-action="delete-group">Xóa nhóm</button>
+                        </div>
+                    </div>
+                    <div class="group-card-body">
+                        <div class="form-grid">
+                            <label>
+                                <span>Tên nhóm</span>
+                                <input data-field="group-title" value="${escapeHtml(group.title || "")}">
+                            </label>
+                            <label>
+                                <span>Mô tả nhóm</span>
+                                <input data-field="group-description" value="${escapeHtml(group.description || "")}">
+                            </label>
+                        </div>
+                        <div class="question-list">
+                            ${renderQuestions(group.questions, groupIndex)}
+                        </div>
+                    </div>
+                </article>
+            `).join("");
+        }
+
+        function renderQuestions(questions, groupIndex) {
+            if (!questions.length) {
+                return '<div class="empty-state">Nhóm này chưa có câu hỏi.</div>';
+            }
+
+            return questions.map((question, questionIndex) => `
+                <article class="question-card ${question.type === "title-block" ? "title-card" : ""}" data-question-index="${questionIndex}">
+                    <div class="question-card-head">
+                        <strong>${question.type === "title-block" ? "Tiêu đề khung" : `Câu hỏi ${questionIndex + 1}`}</strong>
+                        <div class="mini-actions">
+                            <button type="button" class="danger" data-action="delete-question" data-group-index="${groupIndex}" data-question-index="${questionIndex}">Xóa</button>
+                        </div>
+                    </div>
+                    <div class="question-card-body">
+                        <div class="form-grid">
+                            <label>
+                                <span>Mã câu hỏi</span>
+                                <input data-field="question-id" data-group-index="${groupIndex}" data-question-index="${questionIndex}" value="${escapeHtml(question.id || "")}">
+                            </label>
+                            <label>
+                                <span>Loại câu hỏi</span>
+                                <select data-field="question-type" data-group-index="${groupIndex}" data-question-index="${questionIndex}">
+                                    ${questionTypes.map((type) => `<option value="${type.value}" ${question.type === type.value ? "selected" : ""}>${type.label}</option>`).join("")}
+                                </select>
+                            </label>
+                            ${question.type === "title-block" ? `
+                                <label class="full">
+                                    <span>Tiêu đề khung</span>
+                                    <input data-field="question-label" data-group-index="${groupIndex}" data-question-index="${questionIndex}" value="${escapeHtml(question.label || "")}">
+                                </label>
+                                <label class="full">
+                                    <span>Mô tả dưới tiêu đề</span>
+                                    <textarea data-field="question-description" data-group-index="${groupIndex}" data-question-index="${questionIndex}">${escapeHtml(question.description || "")}</textarea>
+                                </label>
+                            ` : `
+                                <label class="full">
+                                    <span>Nội dung câu hỏi</span>
+                                    <input data-field="question-label" data-group-index="${groupIndex}" data-question-index="${questionIndex}" value="${escapeHtml(question.label || "")}">
+                                </label>
+                                <label class="check-row">
+                                    <input type="checkbox" data-field="question-required" data-group-index="${groupIndex}" data-question-index="${questionIndex}" ${question.required ? "checked" : ""}>
+                                    <span>Bắt buộc trả lời</span>
+                                </label>
+                                <label>
+                                    <span>Ghi chú</span>
+                                    <input data-field="question-note" data-group-index="${groupIndex}" data-question-index="${questionIndex}" value="${escapeHtml(question.note || "")}">
+                                </label>
+                            `}
+                            ${renderQuestionConfig(question, groupIndex, questionIndex)}
+                        </div>
+                    </div>
+                </article>
+            `).join("");
+        }
+
+        function renderQuestionConfig(question, groupIndex, questionIndex) {
+            if (question.type === "title-block") {
+                return "";
+            }
+
+            if (question.type === "radio" || question.type === "radio-other" || question.type === "checkbox-other") {
+                return `
+                    <label class="full">
+                        <span>Phương án, mỗi dòng một lựa chọn</span>
+                        <textarea data-field="question-options" data-group-index="${groupIndex}" data-question-index="${questionIndex}">${escapeHtml((question.options || []).join("\n"))}</textarea>
+                    </label>
+                    ${question.type !== "radio" ? `
+                        <label>
+                            <span>Nhãn phương án khác</span>
+                            <input data-field="question-other-label" data-group-index="${groupIndex}" data-question-index="${questionIndex}" value="${escapeHtml(question.otherLabel || "Khác")}">
+                        </label>
+                    ` : ""}
+                `;
+            }
+
+            if (question.type === "grid") {
+                return `
+                    <label class="full">
+                        <span>Dòng bảng, định dạng: ma | Nhãn hiển thị</span>
+                        <textarea data-field="question-items" data-group-index="${groupIndex}" data-question-index="${questionIndex}">${escapeHtml(formatGridItems(question.items || []))}</textarea>
+                    </label>
+                `;
+            }
+
+            if (question.type === "number") {
+                return `
+                    <label>
+                        <span>Giá trị nhỏ nhất</span>
+                        <input type="number" data-field="question-min" data-group-index="${groupIndex}" data-question-index="${questionIndex}" value="${question.min ?? 0}">
+                    </label>
+                    <label>
+                        <span>Bước nhảy</span>
+                        <input data-field="question-step" data-group-index="${groupIndex}" data-question-index="${questionIndex}" value="${escapeHtml(question.step || "any")}">
+                    </label>
+                `;
+            }
+
+            if (question.type === "electricity-choice" || question.type === "food-distance-choice") {
+                return '<div class="empty-state full">Loại câu hỏi này dùng mẫu dựng sẵn của app.</div>';
+            }
+
+            return "";
+        }
+
+        function renderPreview() {
+            const value = buildSurvey();
+            const groupsMarkup = value.groups.length
+                ? value.groups.map((group) => `
+                    <section class="preview-group">
+                        <h3>${escapeHtml(group.title)}</h3>
+                        ${group.description ? `<p>${escapeHtml(group.description)}</p>` : ""}
+                        ${group.questions.length ? group.questions.map((question) => question.type === "title-block" ? `
+                            <div class="preview-question title-block">
+                                <strong>${escapeHtml(question.label)}</strong>
+                                ${question.description ? `<small>${escapeHtml(question.description)}</small>` : "<small>Tiêu đề khung</small>"}
+                            </div>
+                        ` : `
+                            <div class="preview-question">
+                                <strong>${escapeHtml(question.label)}</strong>
+                                <small>${escapeHtml(question.type)}${question.required ? " · bắt buộc" : ""}${question.options ? ` · ${question.options.length} lựa chọn` : ""}${question.items ? ` · ${question.items.length} dòng` : ""}</small>
+                            </div>
+                        `).join("") : '<div class="empty-state">Chưa có câu hỏi.</div>'}
+                    </section>
+                `).join("")
+                : '<div class="empty-state">Khảo sát chưa có nhóm câu hỏi.</div>';
+
+            elements.surveyPreview.innerHTML = `
+                <div class="preview-title">
+                    <div>
+                        <h2>${escapeHtml(value.name)}</h2>
+                        ${value.description ? `<p>${escapeHtml(value.description)}</p>` : ""}
+                    </div>
+                    <span class="preview-badge">${value.available ? "Đang mở" : "Bản nháp"}</span>
+                </div>
+                ${groupsMarkup}
+            `;
+        }
+
+        function renderExport() {
+            const value = buildSurvey();
+            elements.exportOutput.value = [
+                "/* Dán object này vào mảng surveys trong js/data/surveys.js.",
+                "   Nếu đang sửa khảo sát có sẵn, hãy giữ lại calculate(formData) cũ nếu công thức đã chạy ổn. */",
+                surveyToJsObject(value)
+            ].join("\n");
+        }
+
+        function renderStats() {
+            const value = buildSurvey();
+            const questions = value.groups.flatMap((group) => group.questions || []);
+            const titleBlocks = questions.filter((question) => question.type === "title-block");
+            const realQuestions = questions.filter((question) => question.type !== "title-block");
+
+            elements.statGroups.textContent = value.groups.length;
+            elements.statQuestions.textContent = realQuestions.length;
+            elements.statTitles.textContent = titleBlocks.length;
+            elements.statStatus.textContent = value.available ? "Mở" : "Nháp";
+        }
+
+        function renderAll() {
+            renderMetadata();
+            renderExistingSurveyList();
+            renderGroups();
+            renderStats();
+            renderPreview();
+            renderExport();
+        }
+
+        function syncMetadata() {
+            survey.id = elements.surveyId.value;
+            survey.name = elements.surveyName.value;
+            survey.icon = elements.surveyIcon.value;
+            survey.description = elements.surveyDescription.value;
+            survey.available = elements.surveyAvailable.checked;
+        }
+
+        function updateFromField(field) {
+            const groupIndex = Number(field.dataset.groupIndex);
+            const questionIndex = Number(field.dataset.questionIndex);
+            const group = survey.groups[groupIndex];
+            const question = group?.questions?.[questionIndex];
+            const name = field.dataset.field;
+
+            if (name === "group-title") group.title = field.value;
+            if (name === "group-description") group.description = field.value;
+            if (!question) return;
+
+            if (name === "question-id") question.id = field.value;
+            if (name === "question-label") question.label = field.value;
+            if (name === "question-type") {
+                question.type = field.value;
+                if (question.type === "title-block") {
+                    question.description = question.description || "Mô tả ngắn cho phần này";
+                    question.required = false;
+                }
+                if (question.type === "radio" || question.type === "radio-other" || question.type === "checkbox-other") {
+                    question.options = question.options?.length ? question.options : ["Lựa chọn 1", "Lựa chọn 2"];
+                    question.otherLabel = question.otherLabel || "Khác";
+                }
+                if (question.type === "grid") {
+                    question.items = question.items?.length ? question.items : [{ code: "dong_1", label: "Dòng 1" }];
+                }
+                renderAll();
+                return;
+            }
+            if (name === "question-required") question.required = field.checked;
+            if (name === "question-note") question.note = field.value;
+            if (name === "question-description") question.description = field.value;
+            if (name === "question-options") question.options = splitLines(field.value);
+            if (name === "question-other-label") question.otherLabel = field.value;
+            if (name === "question-items") question.items = parseGridItems(field.value);
+            if (name === "question-min") question.min = field.value;
+            if (name === "question-step") question.step = field.value;
+        }
+
+        function saveDraft() {
+            syncMetadata();
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(buildSurvey()));
+            setStatus("Đã lưu nháp trên trình duyệt.");
+        }
+
+        function loadDraft() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                return raw ? JSON.parse(raw) : null;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        async function copyText(text, message) {
+            try {
+                await navigator.clipboard.writeText(text);
+                setStatus(message);
+            } catch (error) {
+                elements.exportOutput.select();
+                document.execCommand("copy");
+                setStatus(message);
+            }
+        }
+
+        function setStatus(message) {
+            elements.status.textContent = message;
+            window.clearTimeout(setStatus.timer);
+            setStatus.timer = window.setTimeout(() => {
+                elements.status.textContent = "";
+            }, 2500);
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#39;");
+        }
+
+        document.getElementById("addGroupBtn").addEventListener("click", () => {
+            syncMetadata();
+            survey.groups.push(createEmptyGroup());
+            renderAll();
+        });
+
+        document.getElementById("saveDraftBtn").addEventListener("click", saveDraft);
+
+        document.getElementById("loadSampleBtn").addEventListener("click", () => {
+            survey = JSON.parse(JSON.stringify(sampleSurvey));
+            renderAll();
+            setStatus("Đã nạp mẫu khảo sát.");
+        });
+
+        document.getElementById("resetBtn").addEventListener("click", () => {
+            survey = createEmptySurvey();
+            localStorage.removeItem(STORAGE_KEY);
+            renderAll();
+            setStatus("Đã tạo khung trống.");
+        });
+
+        elements.existingSurveyList.addEventListener("click", (event) => {
+            const card = event.target.closest("[data-existing-survey-id]");
+            if (!card) return;
+
+            const selectedSurvey = getExistingSurveys().find((item) => item.id === card.dataset.existingSurveyId);
+            if (!selectedSurvey) return;
+
+            survey = normalizeSurveyForBuilder(selectedSurvey);
+            renderAll();
+            setStatus(`Đã nạp ${survey.name} vào khung admin.`);
+        });
+
+        document.getElementById("copyJsonBtn").addEventListener("click", () => {
+            copyText(JSON.stringify(buildSurvey(), null, 4), "Đã copy JSON.");
+        });
+
+        document.getElementById("copyJsBtn").addEventListener("click", () => {
+            copyText(surveyToJsObject(buildSurvey()), "Đã copy JS object.");
+        });
+
+        ["input", "change"].forEach((eventName) => {
+            document.addEventListener(eventName, (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement)) return;
+
+                if (target.id && target.id.startsWith("survey")) {
+                    syncMetadata();
+                    renderStats();
+                    renderPreview();
+                    renderExport();
+                    return;
+                }
+
+                if (target.dataset.field) {
+                    updateFromField(target);
+                    renderStats();
+                    renderPreview();
+                    renderExport();
+                }
+            });
+        });
+
+        elements.groupList.addEventListener("click", (event) => {
+            const button = event.target.closest("button[data-action]");
+            if (!button) return;
+
+            const groupCard = button.closest("[data-group-index]");
+            const groupIndex = Number(button.dataset.groupIndex ?? groupCard?.dataset.groupIndex);
+            const questionIndex = Number(button.dataset.questionIndex);
+            syncMetadata();
+
+            if (button.dataset.action === "add-question") {
+                survey.groups[groupIndex].questions.push(createEmptyQuestion());
+            }
+
+            if (button.dataset.action === "add-title-block") {
+                survey.groups[groupIndex].questions.push(createTitleBlock());
+            }
+
+            if (button.dataset.action === "delete-group") {
+                survey.groups.splice(groupIndex, 1);
+            }
+
+            if (button.dataset.action === "delete-question") {
+                survey.groups[groupIndex].questions.splice(questionIndex, 1);
+            }
+
+            renderAll();
+        });
+
+        renderAll();
+    </script>
+</body>
+</html>

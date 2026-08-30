@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="EcoImpact Tracker">
+  <rect width="64" height="64" rx="16" fill="#07533f"/>
+  <circle cx="32" cy="32" r="23" fill="#eaf7ee"/>
+  <path d="M45.8 16.9C34.4 17.7 23.9 24 19 34c8.8 2.2 20.6-.3 26.8-17.1Z" fill="#2f7d46"/>
+  <path d="M20.4 34.2c6.2-1.1 12.7-4.7 18.5-10.7" fill="none" stroke="#f7d95b" stroke-width="3.2" stroke-linecap="round"/>
+  <path d="M21 42h6.5m4.5 0h11" fill="none" stroke="#07533f" stroke-width="4" stroke-linecap="round"/>
+  <path d="M27.5 42v-5.5m4.5 5.5v-9m5.5 9V29" fill="none" stroke="#07533f" stroke-width="4" stroke-linecap="round"/>
+</svg>

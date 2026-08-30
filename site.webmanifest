@@ -1,0 +1,32 @@
+{
+  "name": "EcoImpact Tracker",
+  "short_name": "EcoImpact",
+  "description": "Khảo sát tiêu dùng bền vững và chỉ số tiêu dùng tài nguyên.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#eaf7ee",
+  "theme_color": "#07533f",
+  "icons": [
+    {
+      "src": "assets/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

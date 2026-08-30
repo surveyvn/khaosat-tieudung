@@ -4,13 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#07533f">
-    <title>Khảo sát Tiêu dùng Bền vững - NTTU</title>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Khảo sát Tiêu dùng Bền vững</title>
+    <link rel="shortcut icon" type="image/png" href="assets/favicon-32x32.png">
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
     <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
     <link rel="manifest" href="site.webmanifest">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260704-ux-10">
+    <link rel="stylesheet" href="css/base/base.css">
+    <link rel="stylesheet" href="css/components/brandbar.css">
+    <link rel="stylesheet" href="css/screens/hero.css">
+    <link rel="stylesheet" href="css/components/wizard-progress.css">
+    <link rel="stylesheet" href="css/components/forms.css">
+    <link rel="stylesheet" href="css/components/history.css">
+    <link rel="stylesheet" href="css/screens/questionnaire-layout.css">
+    <link rel="stylesheet" href="css/screens/survey-selector.css">
+    <link rel="stylesheet" href="css/components/question-controls.css">
+    <link rel="stylesheet" href="css/screens/result.css">
+    <link rel="stylesheet" href="css/utilities/states.css">
+    <link rel="stylesheet" href="css/utilities/animations.css">
+    <link rel="stylesheet" href="css/utilities/responsive.css">
+    <link rel="stylesheet" href="css/app-shell.css">
 </head>
 <body class="profile-step">
     <div class="eco-backdrop" aria-hidden="true">
@@ -23,26 +42,228 @@
             <div class="calculator-content full-width">
                 <div class="app-brandbar" aria-label="EcoImpact Tracker">
                     <div class="app-wordmark">
-                        <span class="leaf-logo-mark" aria-hidden="true"><i class="fas fa-leaf"></i></span>
+                        <span class="leaf-logo-mark" aria-hidden="true">
+                            <img src="assets/icon.svg" alt="">
+                        </span>
                         <span>
                             <strong>EcoImpact Tracker</strong>
-                            <small>Nguyen Tat Thanh University</small>
+                            <small id="appContextLabel">Tổng quan cá nhân</small>
                         </span>
                     </div>
-                    <div class="app-brand-meta" aria-label="Thông tin khảo sát">
-                        <span>TMR</span>
-                        <span>Điện</span>
-                        <span>Thực phẩm</span>
-                        <span>Thời trang</span>
+                    <div class="app-brand-meta" id="appBrandMeta" aria-label="Thông tin mục hiện tại">
+                        <span>Hồ sơ xanh</span>
+                        <span>Chi tiêu</span>
+                        <span>Thử thách</span>
                     </div>
                 </div>
 
-                <header class="hero">
+                <nav class="product-nav" aria-label="Điều hướng ứng dụng">
+                    <button class="product-nav-item active" type="button" data-module="home"><i class="fas fa-house"></i><span>Tổng quan</span></button>
+                    <button class="product-nav-item" type="button" data-module="eco-profile"><i class="fas fa-leaf"></i><span>Hồ sơ xanh</span></button>
+                    <button class="product-nav-item" type="button" data-module="challenges"><i class="fas fa-bullseye"></i><span>Thử thách</span></button>
+                    <button class="product-nav-item" type="button" data-module="biome"><i class="fas fa-tree"></i><span>Khu rừng</span></button>
+                    <button class="product-nav-item" type="button" data-module="community"><i class="fas fa-people-group"></i><span>Cộng đồng</span></button>
+                    <button class="product-nav-item" type="button" data-module="survey"><i class="fas fa-clipboard-check"></i><span>Khảo sát</span></button>
+                    <button class="product-nav-item" type="button" data-module="expense"><i class="fas fa-wallet"></i><span>Chi tiêu</span></button>
+                    <button class="product-nav-item" type="button" data-module="ai"><i class="fas fa-message"></i><span>Trợ lý AI</span><small>Beta</small></button>
+                    <button class="account-trigger" id="accountTrigger" type="button"><span class="account-avatar"><i class="fas fa-user"></i></span><span id="accountLabel">Đăng nhập</span><small id="accountPlanBadge" class="account-plan-badge" hidden>Free</small></button>
+                </nav>
+
+                <section class="module-view active" id="module-home">
+                    <div class="dashboard-welcome">
+                        <div>
+                            <p class="eyebrow">Nền tảng sống xanh cá nhân</p>
+                            <h1>Chào bạn, hôm nay mình cùng tạo một thay đổi nhỏ nhé.</h1>
+                            <p>Đo lường tác động tiêu dùng, kiểm soát tài chính và từng bước xây dựng lối sống bền vững trong một ứng dụng.</p>
+                            <button class="btn-next module-link" type="button" data-open-module="survey">Bắt đầu khảo sát <i class="fas fa-arrow-right"></i></button>
+                        </div>
+                        <button class="dashboard-score module-link" type="button" data-open-module="eco-profile" aria-label="Mở Hồ sơ Tiêu dùng Xanh">
+                            <span><i class="fas fa-leaf"></i></span>
+                            <strong id="dashboardEcoScore">--</strong>
+                            <small id="dashboardEcoScoreLabel">Hoàn thiện dữ liệu để chấm điểm</small>
+                        </button>
+                    </div>
+                    <div class="module-card-grid">
+                        <article class="module-card survey-card-home">
+                            <span class="module-icon"><i class="fas fa-chart-simple"></i></span>
+                            <p class="module-status">Đang hoạt động</p><h2>Khảo sát tác động</h2>
+                            <p>Đánh giá dấu chân vật chất từ điện, thực phẩm và thời trang theo chỉ số TMR.</p>
+                            <button type="button" class="text-action module-link" data-open-module="survey">Xem 3 khảo sát <i class="fas fa-arrow-right"></i></button>
+                        </article>
+                        <article class="module-card expense-card-home">
+                            <span class="module-icon"><i class="fas fa-coins"></i></span>
+                            <p class="module-status">Mới</p><h2>Quản lý chi tiêu</h2>
+                            <p>Đặt ngân sách, ghi nhận khoản chi và nhận khuyến nghị tiết kiệm theo mục tiêu.</p>
+                            <button type="button" class="text-action module-link" data-open-module="expense">Thiết lập ngân sách <i class="fas fa-arrow-right"></i></button>
+                        </article>
+                        <article class="module-card carbon-card-home">
+                            <span class="module-icon"><i class="fas fa-robot"></i></span>
+                            <p class="module-status">Bản thử nghiệm</p><h2>Trợ lý AI tài chính</h2>
+                            <p>Phân tích ngân sách, hướng dẫn quản lý chi tiêu và gợi ý ghi nhận giao dịch ngân hàng.</p>
+                            <button type="button" class="text-action module-link" data-open-module="ai">Trò chuyện ngay <i class="fas fa-arrow-right"></i></button>
+                        </article>
+                        <article class="module-card eco-profile-card-home">
+                            <span class="module-icon"><i class="fas fa-seedling"></i></span>
+                            <p class="module-status">Hồ sơ cá nhân</p><h2>Eco-Financial Score</h2>
+                            <p>Kết hợp sức khỏe tài chính và kết quả khảo sát TMR để chỉ ra điều bạn đang làm tốt và ưu tiên cần cải thiện.</p>
+                            <button type="button" class="text-action module-link" data-open-module="eco-profile">Xem hồ sơ xanh <i class="fas fa-arrow-right"></i></button>
+                        </article>
+                        <article class="module-card challenge-card-home">
+                            <span class="module-icon"><i class="fas fa-flag-checkered"></i></span>
+                            <p class="module-status">Rèn luyện thói quen</p><h2>Thử thách cá nhân</h2>
+                            <p>Chọn một mục tiêu nhỏ, theo dõi tiến độ rõ ràng và cải thiện tài chính cùng lối sống xanh từng ngày.</p>
+                            <button type="button" class="text-action module-link" data-open-module="challenges">Khám phá thử thách <i class="fas fa-arrow-right"></i></button>
+                        </article>
+                        <article class="module-card biome-card-home">
+                            <span class="module-icon"><i class="fas fa-tree"></i></span>
+                            <p class="module-status">Hệ sinh thái sống</p><h2>Khu rừng cá nhân</h2>
+                            <p>Nhìn thấy hành trình của bạn lớn lên thành cây xanh, sinh vật và những huy hiệu đáng nhớ.</p>
+                            <button type="button" class="text-action module-link" data-open-module="biome">Ghé thăm khu rừng <i class="fas fa-arrow-right"></i></button>
+                        </article>
+                        <article class="module-card community-card-home">
+                            <span class="module-icon"><i class="fas fa-hand-holding-heart"></i></span>
+                            <p class="module-status">Đang xây dựng đối tác</p><h2>Tác động cộng đồng</h2>
+                            <p>Theo dõi các dự án môi trường bạn quan tâm và xem bằng chứng minh bạch khi chương trình chính thức được kích hoạt.</p>
+                            <button type="button" class="text-action module-link" data-open-module="community">Xem trung tâm tác động <i class="fas fa-arrow-right"></i></button>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="module-view" id="module-eco-profile">
+                    <div class="eco-profile-hero">
+                        <div class="eco-profile-copy">
+                            <p class="eyebrow">Hồ sơ Tiêu dùng Xanh</p>
+                            <h1>Sức khỏe lối sống của bạn</h1>
+                            <p id="ecoProfileSummary">Hoàn thiện khảo sát và ngân sách để nhận đánh giá cân bằng giữa tài chính và tiêu dùng xanh.</p>
+                            <span class="score-confidence" id="ecoScoreConfidence"><i class="fas fa-circle-info"></i> Chưa đủ dữ liệu</span>
+                        </div>
+                        <div class="eco-score-orbit" id="ecoScoreRing">
+                            <div><strong id="ecoTotalScore">--</strong><small>/100</small><span id="ecoTotalLabel">Chưa chấm điểm</span></div>
+                        </div>
+                    </div>
+                    <div class="eco-dimension-grid">
+                        <article class="eco-dimension-card financial"><div class="eco-dimension-icon"><i class="fas fa-wallet"></i></div><div><p>Sức khỏe tài chính</p><strong id="ecoFinancialScore">--</strong><span id="ecoFinancialLabel">Cần nhập thu nhập và mục tiêu</span></div><div class="eco-progress"><i id="ecoFinancialProgress"></i></div></article>
+                        <article class="eco-dimension-card lifestyle"><div class="eco-dimension-icon"><i class="fas fa-earth-asia"></i></div><div><p>Lối sống xanh</p><strong id="ecoLifestyleScore">--</strong><span id="ecoLifestyleLabel">Cần hoàn thành ít nhất một khảo sát</span></div><div class="eco-progress"><i id="ecoLifestyleProgress"></i></div></article>
+                        <article class="eco-dimension-card consistency"><div class="eco-dimension-icon"><i class="fas fa-chart-line"></i></div><div><p>Duy trì thói quen</p><strong id="ecoHabitScore">0</strong><span id="ecoHabitLabel">Bắt đầu ghi chép và khảo sát</span></div><div class="eco-progress"><i id="ecoHabitProgress"></i></div></article>
+                    </div>
+                    <div class="eco-audit-grid">
+                        <section class="eco-audit-card"><div class="eco-section-head"><span><i class="fas fa-sparkles"></i></span><div><p class="result-label">Điểm sáng</p><h2>Bạn đang làm tốt</h2></div></div><div id="ecoStrengths" class="eco-audit-list"></div></section>
+                        <section class="eco-audit-card priority"><div class="eco-section-head"><span><i class="fas fa-bullseye"></i></span><div><p class="result-label">Ưu tiên tháng này</p><h2>Hành động nên làm</h2></div></div><div id="ecoPriorities" class="eco-audit-list"></div></section>
+                    </div>
+                    <section class="eco-method-card">
+                        <div><i class="fas fa-shield-heart"></i><div><h3>Điểm số minh bạch</h3><p>Điểm tổng hợp dùng 45% tài chính, 45% kết quả TMR và 10% mức duy trì. Khi thiếu một thành phần, hệ thống chỉ tính trên dữ liệu hiện có và hiển thị độ đầy đủ.</p></div></div>
+                        <small>TMR là dấu chân vật chất, không được trình bày như số CO₂ đã giảm. Các ngưỡng hiện là tham chiếu vận hành và sẽ được hiệu chỉnh khi có thêm dữ liệu.</small>
+                    </section>
+                </section>
+
+                <section class="module-view" id="module-challenges">
+                    <div class="challenge-hero">
+                        <div><p class="eyebrow">Thử thách phát triển bản thân</p><h1>Thay đổi nhỏ,<br>tiến bộ thật.</h1><p>Không chạy theo phần thưởng vật chất. Mỗi thử thách giúp bạn tạo một thói quen tài chính hoặc tiêu dùng xanh có thể đo lường.</p></div>
+                        <div class="challenge-hero-stat"><span><i class="fas fa-fire"></i></span><strong id="challengeActiveCount">0</strong><small>thử thách đang thực hiện</small></div>
+                    </div>
+                    <section class="challenge-active-panel" id="challengeActivePanel">
+                        <div class="challenge-section-title"><div><p class="result-label">Đang thực hiện</p><h2>Hành trình của bạn</h2></div><span id="challengeCompletedCount">0 đã hoàn thành</span></div>
+                        <div id="activeChallengeList" class="active-challenge-list"></div>
+                    </section>
+                    <section class="challenge-library">
+                        <div class="challenge-section-title"><div><p class="result-label">Thư viện</p><h2>Chọn thử thách phù hợp</h2></div><div class="challenge-filter" role="group" aria-label="Lọc thử thách"><button class="active" type="button" data-challenge-filter="all">Tất cả</button><button type="button" data-challenge-filter="finance">Tài chính</button><button type="button" data-challenge-filter="eco">Sống xanh</button></div></div>
+                        <div id="challengeGrid" class="challenge-grid"></div>
+                    </section>
+                    <div id="challengeToast" class="challenge-toast" role="status" aria-live="polite"></div>
+                </section>
+
+                <section class="module-view" id="module-biome">
+                    <div class="biome-heading"><div><p class="eyebrow">Hệ sinh thái sống</p><h1>Khu rừng của bạn</h1><p>Mỗi hành động có ý nghĩa sẽ nuôi dưỡng khu rừng. Tiến bộ được tính từ dữ liệu thật trong ứng dụng.</p></div><div class="leaf-balance"><span><i class="fas fa-leaf"></i></span><div><strong id="biomeLeafCount">0</strong><small>Lá xanh</small></div></div></div>
+                    <section class="biome-scene" id="biomeScene" aria-label="Khu rừng cá nhân đang phát triển">
+                        <div class="biome-sky"><span class="biome-sun"></span><span class="biome-cloud cloud-one"></span><span class="biome-cloud cloud-two"></span></div>
+                        <div class="biome-hills"><i></i><i></i></div>
+                        <div class="biome-plants">
+                            <span class="biome-tree tree-one"><i class="fas fa-tree"></i></span><span class="biome-tree tree-two"><i class="fas fa-tree"></i></span><span class="biome-tree tree-three"><i class="fas fa-tree"></i></span>
+                            <span class="biome-sprout sprout-one"><i class="fas fa-seedling"></i></span><span class="biome-sprout sprout-two"><i class="fas fa-seedling"></i></span>
+                            <span class="biome-animal animal-one"><i class="fas fa-dove"></i></span><span class="biome-animal animal-two"><i class="fas fa-frog"></i></span>
+                        </div>
+                        <div class="biome-ground"></div>
+                        <div class="biome-level-chip"><small>Cấp độ hiện tại</small><strong id="biomeLevelName">Hạt mầm</strong></div>
+                    </section>
+                    <div class="biome-progress-card"><div><span id="biomeCurrentLevel">Cấp 1</span><strong id="biomeNextText">Còn 100 Lá để mở khóa Mầm xanh</strong></div><div class="biome-level-progress"><i id="biomeLevelProgress"></i></div><small id="biomeProgressNote">Hoàn thành khảo sát, ghi chép chi tiêu và thử thách để nhận Lá xanh.</small></div>
+                    <div class="biome-content-grid">
+                        <section class="biome-panel"><div class="biome-panel-head"><div><p class="result-label">Bộ sưu tập</p><h2>Huy hiệu của bạn</h2></div><span id="badgeUnlockedCount">0/6</span></div><div id="biomeBadgeGrid" class="biome-badge-grid"></div></section>
+                        <section class="biome-panel"><div class="biome-panel-head"><div><p class="result-label">Nguồn phát triển</p><h2>Lá xanh đến từ đâu?</h2></div></div><div id="biomeSourceList" class="biome-source-list"></div></section>
+                    </div>
+                    <section class="biome-note"><i class="fas fa-circle-info"></i><p>Lá xanh và khu rừng là phần thưởng tinh thần trong ứng dụng, chưa đại diện cho cây được trồng hoặc đóng góp ngoài đời thực.</p></section>
+                </section>
+
+                <section class="module-view" id="module-community">
+                    <div class="community-hero"><div><span class="community-status"><i class="fas fa-shield-halved"></i> Giai đoạn chuẩn bị đối tác</span><p class="eyebrow">Tác động cộng đồng</p><h1>Cùng biến thói quen tốt<br>thành thay đổi thật.</h1><p>Trong tương lai, Lá xanh có thể hỗ trợ những chiến dịch đã được xác minh. Hiện tại app chưa quy đổi Lá thành cây trồng, tiền hoặc hoạt động ngoài đời thực.</p></div><div class="verified-impact-stat"><small>Hành động đã xác minh</small><strong>0</strong><span>Chưa kích hoạt NGO</span></div></div>
+                    <section class="impact-trust-banner"><span><i class="fas fa-circle-info"></i></span><div><h2>Không công bố tác động khi chưa có bằng chứng</h2><p>Mỗi chiến dịch chính thức sau này phải có đối tác pháp lý, quy tắc quy đổi, chứng từ và báo cáo kết quả trước khi được ghi nhận là tác động thực tế.</p></div></section>
+                    <section class="impact-projects"><div class="impact-section-head"><div><p class="result-label">Dự án dự kiến</p><h2>Bạn quan tâm điều gì?</h2><p>Đánh dấu quan tâm chỉ được lưu trên thiết bị, không phải một khoản quyên góp.</p></div><span id="impactInterestCount">0 dự án quan tâm</span></div><div id="impactProjectGrid" class="impact-project-grid"></div></section>
+                    <div class="impact-lower-grid">
+                        <section class="impact-panel"><div class="impact-panel-head"><span><i class="fas fa-list-check"></i></span><div><p class="result-label">Tiêu chuẩn bắt buộc</p><h2>Trước khi một dự án được mở</h2></div></div><div class="impact-checklist"><article><i class="fas fa-check"></i><span>Xác minh tổ chức và người chịu trách nhiệm</span></article><article><i class="fas fa-check"></i><span>Công bố tỷ lệ quy đổi Lá xanh</span></article><article><i class="fas fa-check"></i><span>Chứng từ tài chính hoặc biên bản hoạt động</span></article><article><i class="fas fa-check"></i><span>Báo cáo kết quả và thời gian cập nhật</span></article></div></section>
+                        <section class="impact-panel"><div class="impact-panel-head"><span><i class="fas fa-clock-rotate-left"></i></span><div><p class="result-label">Sổ tác động</p><h2>Lịch sử đã xác minh</h2></div></div><div class="impact-empty-ledger"><i class="fas fa-file-shield"></i><h3>Chưa có hoạt động thực tế</h3><p>Lịch sử chỉ xuất hiện sau khi có đối tác và bằng chứng được công bố.</p></div></section>
+                    </div>
+                    <div id="impactToast" class="challenge-toast" role="status" aria-live="polite"></div>
+                </section>
+
+                <section class="module-view" id="module-expense">
+                    <div class="module-heading expense-heading"><div><p class="eyebrow">Tài chính cá nhân</p><h1>Quản lý chi tiêu</h1><p>Nắm rõ tiền của bạn đang đi đâu và duy trì mục tiêu tiết kiệm mỗi tháng.</p></div><label class="month-picker"><span>Tháng theo dõi</span><input id="expenseMonth" type="month"></label></div>
+                    <div class="spending-overview">
+                        <article class="spending-total-card">
+                            <div class="spending-card-head"><span>Tổng chi tiêu</span><i class="fas fa-arrow-trend-down"></i></div>
+                            <strong id="overviewSpent">0 ₫</strong><small id="overviewTransactionCount">0 giao dịch trong tháng</small>
+                            <div class="spending-mini-stats"><span><small>Trung bình/ngày</small><b id="dailyAverage">0 ₫</b></span><span><small>Nhóm chi nhiều nhất</small><b id="topCategory">Chưa có</b></span></div>
+                        </article>
+                        <article class="category-chart-card">
+                            <div class="category-chart-wrap"><div id="categoryDonut" class="category-donut"><div><small>Đã chi</small><strong id="donutPercent">0%</strong></div></div></div>
+                            <div><div class="expense-list-head"><h2>Phân bổ chi tiêu</h2><span id="categoryCount">0 danh mục</span></div><div id="categoryBreakdown" class="category-breakdown"></div></div>
+                        </article>
+                    </div>
+                    <div class="financial-coach-grid">
+                        <section class="financial-score-card"><div class="score-ring" id="financialScoreRing"><div><strong id="financialScore">--</strong><small>/100</small></div></div><div><p class="result-label">Sức khỏe tài chính</p><h2 id="financialScoreLabel">Chưa đủ dữ liệu</h2><p id="financialScoreNote">Thiết lập thu nhập và mục tiêu để bắt đầu đánh giá.</p></div></section>
+                        <section class="weekly-plan-card"><div class="bank-card-head"><span><i class="fas fa-calendar-check"></i></span><div><h2>Kế hoạch tuần này</h2><p>Ba hành động nhỏ dựa trên tình hình của bạn.</p></div></div><div id="weeklyPlanList" class="weekly-plan-list"></div></section>
+                        <section class="recurring-card"><div class="bank-card-head"><span><i class="fas fa-rotate"></i></span><div><h2>Thói quen lặp lại</h2><p id="recurringExpenseText">Chưa có đủ giao dịch để nhận diện.</p></div></div></section>
+                        <section class="ai-insight-card"><p class="result-label">Gợi ý nhanh</p><h2 id="aiInsightTitle">Thiết lập ngân sách</h2><p id="aiInsightText">Nhập thu nhập và mục tiêu tiết kiệm để nhận lời khuyên riêng.</p></section>
+                    </div>
+                    <div class="budget-layout">
+                        <form id="budgetForm" class="budget-panel">
+                            <h2>Mục tiêu tháng</h2>
+                            <label for="monthlyIncome">Thu nhập tháng</label><div class="money-input"><input id="monthlyIncome" class="currency-input" type="text" inputmode="numeric" autocomplete="off" placeholder="0" required><span>VNĐ</span></div>
+                            <label for="savingTarget">Mục tiêu tiết kiệm</label><div class="money-input"><input id="savingTarget" class="currency-input" type="text" inputmode="numeric" autocomplete="off" placeholder="0" required><span>VNĐ</span></div>
+                            <button class="btn-next" type="submit">Lưu mục tiêu</button>
+                        </form>
+                        <div class="budget-summary">
+                            <article><small>Ngân sách có thể chi</small><strong id="availableBudget">0 ₫</strong></article>
+                            <article><small>Đã chi tháng này</small><strong id="spentTotal">0 ₫</strong></article>
+                            <article><small>Còn lại</small><strong id="remainingBudget">0 ₫</strong></article>
+                            <div class="budget-progress"><span id="budgetProgress"></span></div>
+                            <p id="budgetAdvice" class="budget-advice">Nhập thu nhập và mục tiêu để nhận khuyến nghị.</p>
+                        </div>
+                    </div>
+                    <div class="expense-workspace">
+                        <form id="expenseForm" class="expense-entry">
+                            <h2>Thêm khoản chi</h2>
+                            <div class="expense-fields"><input id="expenseName" type="text" placeholder="Ví dụ: Đi chợ" required><select id="expenseCategory" required><option value="Ăn uống">Ăn uống</option><option value="Đi lại">Đi lại</option><option value="Nhà ở">Nhà ở</option><option value="Mua sắm">Mua sắm</option><option value="Giải trí">Giải trí</option><option value="Khác">Khác</option></select><div class="money-input"><input id="expenseAmount" class="currency-input" type="text" inputmode="numeric" autocomplete="off" placeholder="Số tiền" required><span>VNĐ</span></div><button class="btn-next" type="submit">Thêm</button></div>
+                        </form>
+                        <div class="expense-list-panel"><div class="expense-list-head"><div><p class="result-label">Dòng tiền</p><h2>Giao dịch trong tháng</h2></div><button id="clearExpenses" class="history-clear" type="button">Xóa tháng này</button></div><div id="expenseList"></div></div>
+                    </div>
+                </section>
+
+                <section class="module-view" id="module-ai">
+                    <div class="ai-layout chat-only">
+                        <section class="ai-chat-card">
+                            <header class="ai-chat-head"><span><i class="fas fa-robot"></i></span><div><p class="eyebrow">Trợ lý tài chính</p><h1>Eco AI</h1><small><i></i> Sẵn sàng hỗ trợ</small></div></header>
+                            <div id="aiMessages" class="ai-messages"><article class="ai-message assistant"><span><i class="fas fa-leaf"></i></span><p>Chào bạn! Mình có thể phân tích chi tiêu, Hồ sơ xanh và thử thách từ dữ liệu trong ứng dụng. Mình sẽ trả lời ngắn gọn, đúng điều bạn hỏi và không tự ý thay đổi dữ liệu.</p></article></div>
+                            <div class="ai-suggestions"><button type="button" data-ai-prompt="Sức khỏe tổng thể của tôi thế nào?">Sức khỏe tổng thể</button><button type="button" data-ai-prompt="Tôi nên cải thiện điều gì trước?">Ưu tiên cải thiện</button><button type="button" data-ai-prompt="Eco-Score của tôi bao nhiêu?">Eco-Score</button><button type="button" data-ai-prompt="Thử thách của tôi thế nào?">Thử thách</button></div>
+                            <form id="aiChatForm" class="ai-chat-form"><input id="aiChatInput" type="text" placeholder="Hỏi về chi tiêu, Eco-Score hoặc một món đồ..." autocomplete="off" required><button type="submit" aria-label="Gửi"><i class="fas fa-arrow-up"></i></button></form>
+                        </section>
+                    </div>
+                </section>
+
+                <header class="hero module-view" id="module-survey">
                     <div class="hero-intro">
                         <div class="hero-copy-block">
                             <div class="hero-kicker">
                                 <span><i class="fas fa-leaf"></i></span>
-                                <strong>NTTU Sustainable Consumption Lab</strong>
+                                <strong>Sustainable Consumption Lab</strong>
                             </div>
                             <p class="eyebrow">Khảo sát • Đo lường • Thay đổi</p>
                             <h1>Hiểu dấu chân tiêu dùng,<br><span>sống xanh hơn mỗi ngày.</span></h1>
@@ -132,31 +353,13 @@
 
                 <section class="wizard-step active" id="step-profile">
                 <div class="step-heading">
-                    <span class="step-tag">Bước 1</span>
-                    <h2>Thông tin người tham gia</h2>
+                    <span class="step-tag">Chỉ lần đầu</span>
+                    <h2>Hoàn thiện hồ sơ khảo sát</h2>
                 </div>
 
-                <form id="profileForm" novalidate>
-                    <div class="question-group">
-                        <label class="question-label" for="fullname">Họ và tên</label>
-                        <input id="fullname" type="text" name="fullname" required>
-                    </div>
+                <div class="info-banner">Chúng mình chỉ hỏi những thông tin cần để tính kết quả. Bạn nhập một lần, các khảo sát sau sẽ tự động sử dụng hồ sơ này.</div>
 
-                    <div class="two-col">
-                        <div class="question-group">
-                            <label class="question-label" for="age">Độ tuổi</label>
-                            <input id="age" type="number" name="age" min="1" placeholder="Nhập tuổi" required>
-                        </div>
-                        <div class="question-group">
-                            <label class="question-label" for="gender">Giới tính</label>
-                            <select id="gender" name="gender" required>
-                                <option value="">Chọn...</option>
-                                <option value="Nam">Nam</option>
-                                <option value="Nữ">Nữ</option>
-                                <option value="Khác">Khác</option>
-                            </select>
-                        </div>
-                    </div>
+                <form id="profileForm" novalidate>
                     <div class="question-group">
                         <label class="question-label" for="household">Hộ gia đình có bao nhiêu thành viên?</label>
                         <div class="profile-input-wrap">
@@ -164,23 +367,6 @@
                             <input id="household" class="smart-number profile-icon-input" type="number" name="household" min="0" step="1" inputmode="numeric" placeholder="Nhập số thành viên" required>
                             <span class="profile-input-unit">thành viên</span>
                         </div>
-                    </div>
-
-                    <div class="question-group">
-                        <label class="question-label" for="province">Tỉnh/Thành phố</label>
-                        <select id="province" name="thanhPho" required>
-                            <option value="">Đang tải dữ liệu...</option>
-                        </select>
-                        <input id="provinceCode" type="hidden" name="maThanhPho">
-                    </div>
-
-                    <div class="question-group">
-                        <label class="question-label" for="ward">Xã/Phường/Đặc khu</label>
-                        <select id="ward" name="xa" required disabled>
-                            <option value="">Vui lòng chọn Tỉnh/Thành phố trước</option>
-                        </select>
-                        <input id="wardManual" class="location-manual hidden" type="text" name="xa" placeholder="Nhập Xã/Phường/Đặc khu" disabled>
-                        <input id="wardCode" type="hidden" name="maXa">
                     </div>
 
                     <div class="button-group">
@@ -289,7 +475,58 @@
         </section>
     </main>
 
-    <script src="locations-2025.js?v=20260703-1"></script>
-    <script src="script.js?v=20260704-ux-4"></script>
+    <div class="auth-modal" id="authModal" aria-hidden="true">
+        <button class="auth-backdrop" type="button" data-close-auth aria-label="Đóng"></button>
+        <section class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+            <button class="auth-close" type="button" data-close-auth aria-label="Đóng"><i class="fas fa-xmark"></i></button>
+            <div id="authGuestView">
+                <div class="auth-brand"><img src="assets/icon.svg" alt=""><div><strong>EcoImpact</strong><small>Sống xanh, tiêu dùng thông minh</small></div></div>
+                <div class="auth-tabs"><button class="active" type="button" data-auth-tab="login">Đăng nhập</button><button type="button" data-auth-tab="register">Đăng ký</button></div>
+                <div id="authMessage" class="auth-message" role="status"></div>
+                <form id="loginForm" class="auth-form active" data-auth-panel="login">
+                    <div><label for="loginEmail">Email</label><input id="loginEmail" type="email" autocomplete="email" placeholder="ban@example.com" required></div>
+                    <div><div class="label-row"><label for="loginPassword">Mật khẩu</label><button id="forgotPassword" type="button">Quên mật khẩu?</button></div><div class="password-field"><input id="loginPassword" type="password" autocomplete="current-password" minlength="6" required><button type="button" data-toggle-password="loginPassword" aria-label="Hiện mật khẩu"><i class="fas fa-eye"></i></button></div></div>
+                    <button class="auth-primary" type="submit">Đăng nhập</button>
+                </form>
+                <form id="registerForm" class="auth-form" data-auth-panel="register">
+                    <div><label for="registerName">Họ và tên</label><input id="registerName" type="text" autocomplete="name" required></div>
+                    <div><label for="registerEmail">Email</label><input id="registerEmail" type="email" autocomplete="email" required></div>
+                    <div class="auth-two-col"><div><label for="registerAge">Độ tuổi</label><input id="registerAge" type="number" min="1" max="120" inputmode="numeric" required></div><div><label for="registerGender">Giới tính</label><select id="registerGender" required><option value="">Chọn...</option><option value="Nam">Nam</option><option value="Nữ">Nữ</option><option value="Khác">Khác</option></select></div></div>
+                    <div><label for="registerPassword">Mật khẩu</label><div class="password-field"><input id="registerPassword" type="password" autocomplete="new-password" minlength="6" required><button type="button" data-toggle-password="registerPassword" aria-label="Hiện mật khẩu"><i class="fas fa-eye"></i></button></div><small>Tối thiểu 6 ký tự</small></div>
+                    <label class="auth-consent"><input id="authConsent" type="checkbox" required><span>Tôi đồng ý với Điều khoản sử dụng và Chính sách bảo mật.</span></label>
+                    <button class="auth-primary" type="submit">Tạo tài khoản</button>
+                </form>
+                <div class="auth-divider"><span>hoặc tiếp tục với</span></div>
+                <div class="social-auth"><button type="button" data-provider="Google"><i class="fab fa-google"></i><span>Google</span></button><button type="button" data-provider="Apple"><i class="fab fa-apple"></i><span>Apple</span></button><button type="button" data-provider="Facebook"><i class="fab fa-facebook"></i><span>Facebook</span></button></div>
+                <p class="auth-note"><i class="fas fa-shield-halved"></i> Bản demo chỉ lưu tài khoản trên thiết bị này.</p>
+            </div>
+            <div id="authUserView" class="auth-user-view">
+                <div class="profile-avatar" id="profileAvatar">E</div><p class="eyebrow">Tài khoản của bạn</p><h2 id="profileName"></h2><p id="profileEmail"></p>
+                <div class="plan-card"><div><small>Gói hiện tại</small><strong>EcoImpact Free</strong></div><span>Miễn phí</span></div>
+                <button class="auth-primary" id="planUpgradeButton" type="button">Khám phá gói Plus</button>
+                <div class="plan-upgrade-panel" id="planUpgradePanel" hidden><div><strong>Free</strong><span>Khảo sát và quản lý chi tiêu cơ bản</span></div><div class="recommended"><strong>Plus</strong><span>Phân tích nâng cao, đồng bộ và Carbon AI</span><small>Sắp mở đăng ký</small></div></div>
+                <button class="auth-secondary" id="logoutButton" type="button"><i class="fas fa-arrow-right-from-bracket"></i> Đăng xuất</button>
+            </div>
+        </section>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/data/locations-2025.js"></script>
+    <script src="js/data/impact-factors.js"></script>
+    <script src="js/core/tmr-calculator.js"></script>
+    <script src="js/services/mi-config.js"></script>
+    <script src="js/data/surveys.js"></script>
+    <script src="js/ui/navigation.js"></script>
+    <script src="js/ui/form-validation.js"></script>
+    <script src="js/services/storage.js"></script>
+    <script src="js/ui/survey-flow.js"></script>
+    <script src="js/services/database.js"></script>
+    <script src="js/services/survey-submit.js"></script>
+    <script src="js/services/locations.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/modules.js"></script>
+    <script src="js/assistant.js"></script>
+    <script src="js/auth.js"></script>
+    <script type="module" src="js/native-app.js"></script>
 </body>
 </html>
