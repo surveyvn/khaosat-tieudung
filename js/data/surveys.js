@@ -422,6 +422,8 @@ const surveys = [
         name: "Khảo sát thời trang",
         icon: "fa-shirt",
         description: "Tìm hiểu thói quen mua sắm, sử dụng và xử lý sản phẩm thời trang nhằm thúc đẩy tiêu dùng bền vững và kinh tế tuần hoàn.",
+        introduction: ["Xin chào Anh/Chị!", "Tôi đang là sinh viên ngành Quản lý tài nguyên và môi trường tại Trường Đại học Nguyễn Tất Thành. Hiện tại, tôi đang làm đồ án môn học về kinh tế tuần hoàn trong ngành thời trang.", "Mục đích của bản khảo sát này nhằm tìm hiểu thói quen mua sắm, sử dụng và cách xử lý quần áo cũ của Anh/Chị hiện nay. Qua đó, nghiên cứu mong muốn đề xuất các giải pháp thúc đẩy lối sống tiêu dùng bền vững và giảm thiểu tác động tiêu cực của rác thải ngành thời trang đến môi trường.", "Để có thêm những số liệu thực tế cho bài làm, tôi rất mong nhận được sự giúp đỡ của mọi người thông qua việc trả lời một số câu hỏi dưới đây.", "Trân trọng cảm ơn Anh/Chị đã dành thời gian tham gia khảo sát!"],
+        introductionNote: "Thời trang là phong cách ăn mặc và xu hướng thẩm mỹ được con người lựa chọn trong từng giai đoạn, thể hiện cá tính, văn hóa và lối sống. Thời trang bao gồm quần áo, giày dép, túi xách, phụ kiện cùng các hoạt động sản xuất, mua sắm và sử dụng trong đời sống hằng ngày.",
         available: true,
         groups: [
             {
@@ -436,7 +438,7 @@ const surveys = [
                         required: true
                     },
                     { id: "gender", label: "3. Giới tính", type: "radio", options: ["Nam", "Nữ", "Khác"], required: true },
-                    { id: "address", label: "4. Địa chỉ", type: "text", required: true },
+                    { id: "address", label: "4. Địa chỉ hiện tại", type: "fashion-location", required: true },
                     {
                         id: "fashion_interest",
                         label: "5. Mức độ quan tâm đến thời trang",

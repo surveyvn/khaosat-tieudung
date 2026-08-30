@@ -80,6 +80,12 @@ numberedQuestions.forEach((question) => {
     if (["radio", "scale"].includes(question.type)) addField(prefix, "radio", question.options?.[0] ?? question.min ?? 0, true);
     else if (["checkbox", "checkbox-other"].includes(question.type)) addField(prefix, "checkbox", question.options[0], true);
     else if (["text", "textarea"].includes(question.type)) addField(prefix, "text", "Câu trả lời kiểm thử");
+    else if (question.type === "fashion-location") {
+        addField("fashion_province", "select-one", "Thành phố Hồ Chí Minh");
+        addField("fashion_province_code", "hidden", "79");
+        addField("fashion_ward", "select-one", "Phường Sài Gòn");
+        addField("fashion_ward_code", "hidden", "26734");
+    }
     else if (question.type === "rank") question.options.forEach((option, index) => {
         const slug = option.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "_");
         addField(`${prefix}_${slug}`, "select-one", index + 1);
@@ -103,5 +109,6 @@ const expectedAnswerKeys = [
 expectedAnswerKeys.forEach((key) => assert.ok(key in payload, `Payload thiếu trường ${key}`));
 assert.equal(payload.soLuongQuanAoMoiNam, 2);
 assert.equal(payload.soLuongGiayDepMoiNam, 1);
+assert.equal(payload.diaChiNguoiTraLoi, "Phường Sài Gòn, Thành phố Hồ Chí Minh");
 
 console.log("Fashion survey: 27 questions, payload mapping and TMR calculation passed.");

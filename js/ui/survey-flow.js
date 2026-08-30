@@ -100,6 +100,8 @@ function renderQuestion(question, surveyId) {
         html += `<input id="${inputId}" type="text" name="${namePrefix}" placeholder="${isAddressQuestion ? "Nhập số nhà, đường, phường/xã, tỉnh/thành" : "Nhập câu trả lời"}" autocomplete="${isAddressQuestion ? "street-address" : "off"}" ${question.required ? "required" : ""}>`;
     } else if (question.type === "textarea") {
         html += `<textarea name="${namePrefix}" rows="3" placeholder="Nhập câu trả lời" ${question.required ? "required" : ""}></textarea>`;
+    } else if (question.type === "fashion-location") {
+        html += `<div class="fashion-location-fields" data-fashion-location><select id="${inputId}_province" name="fashion_province" required><option value="">Chọn Tỉnh/Thành phố...</option></select><select id="${inputId}_ward" name="fashion_ward" disabled><option value="">Chọn Tỉnh/Thành phố trước</option></select><input type="hidden" name="fashion_province_code"><input type="hidden" name="fashion_ward_code"></div>`;
     } else if (question.type === "radio" || question.type === "radio-other") {
         html += `<div class="options-list">${question.options.map((option) => `
             <label class="option-item-custom">
@@ -304,6 +306,17 @@ function renderQuestion(question, surveyId) {
     return html;
 }
 
+function bindFashionLocationInputs(scope) {
+    const locations = normalizeLocationData2025(window.LOCATION_DATA_2025);
+    scope.querySelectorAll("[data-fashion-location]").forEach((container) => {
+        const province = container.querySelector('[name="fashion_province"]'); const ward = container.querySelector('[name="fashion_ward"]'); const provinceCode = container.querySelector('[name="fashion_province_code"]'); const wardCode = container.querySelector('[name="fashion_ward_code"]');
+        if (!province || !ward) return;
+        locations.forEach((location, index) => { const option = document.createElement("option"); option.value = location.thanhPho; option.textContent = location.thanhPho; option.dataset.index = String(index); option.dataset.code = location.maThanhPho; province.appendChild(option); });
+        province.addEventListener("change", () => { clearInlineError(province); ward.innerHTML = '<option value="">Chọn Xã/Phường/Đặc khu...</option>'; ward.disabled = true; ward.required = false; ward.value = ""; if (provinceCode) provinceCode.value = ""; if (wardCode) wardCode.value = ""; const location = locations[Number(province.options[province.selectedIndex]?.dataset.index)]; if (!location) return; if (provinceCode) provinceCode.value = location.maThanhPho; location.xaPhuong.forEach((item) => { const option = document.createElement("option"); option.value = item.tenXa; option.textContent = item.tenXa; option.dataset.code = item.maXa; ward.appendChild(option); }); ward.disabled = false; ward.required = true; });
+        ward.addEventListener("change", () => { clearInlineError(ward); if (wardCode) wardCode.value = ward.options[ward.selectedIndex]?.dataset.code || ""; });
+    });
+}
+
 function bindSmartNumberInputs(scope) {
     scope.querySelectorAll('input[type="number"]').forEach((input) => {
         input.addEventListener("focus", () => {
@@ -503,6 +516,8 @@ function renderSurveyQuestions(survey) {
     surveyTitle.textContent = survey.name;
     surveyMeta.innerHTML = `
         ${survey.description ? `<strong>Mô tả:</strong> ${survey.description}` : ""}
+        ${survey.introduction ? `<div class="survey-introduction">${survey.introduction.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("")}</div>` : ""}
+        ${survey.introductionNote ? `<div class="note-highlight survey-introduction-note">${escapeHtml(survey.introductionNote)}</div>` : ""}
     `;
 
     dynamicQuestions.innerHTML = survey.groups.map((group) => `
@@ -519,6 +534,7 @@ function renderSurveyQuestions(survey) {
     bindElectricityChoice(dynamicQuestions);
     bindFoodDistanceChoice(dynamicQuestions);
     bindRankingInputs(dynamicQuestions);
+    bindFashionLocationInputs(dynamicQuestions);
     bindSmartNumberInputs(dynamicQuestions);
     bindUserInputTracking(dynamicQuestions);
 }

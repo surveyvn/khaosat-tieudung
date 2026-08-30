@@ -296,6 +296,13 @@
     font-size: 0.92rem;
 }
 
+.survey-introduction { margin-top: 16px; }
+.survey-introduction p { margin: 0 0 12px; line-height: 1.65; }
+.survey-introduction-note { margin-top: 16px; line-height: 1.65; font-weight: 600; }
+.fashion-location-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.fashion-location-fields select { margin: 0; }
+.note-highlight { line-height: 1.75; word-spacing: 0.08em; }
+
 .survey-scale { display:grid; grid-template-columns:minmax(90px,1fr) auto minmax(90px,1fr); align-items:center; gap:14px; margin-top:10px; padding:16px; border:1px solid #dce8e1; border-radius:16px; background:#fff; }
 .survey-scale-label { color:var(--muted); font-size:.82rem; line-height:1.4; }
 .survey-scale-label:last-child { text-align:right; }
@@ -312,4 +319,5 @@
     .survey-scale-options { grid-column:1/-1; grid-row:1; justify-content:space-between; }
     .survey-scale-options span { width:36px; height:36px; }
     .ranking-item { grid-template-columns:1fr; }
+    .fashion-location-fields { grid-template-columns: 1fr; }
 }

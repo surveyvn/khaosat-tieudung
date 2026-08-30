@@ -102,6 +102,8 @@ function getChoiceValue(form, name, otherName = "", options = {}) {
 
 function buildCommonSheetData() {
     const profile = state.profile || collectProfileData();
+    const tinhThanhNguoiTraLoi = getTypedValue(form, "fashion_province");
+    const xaPhuongNguoiTraLoi = getTypedValue(form, "fashion_ward");
     return compactSubmissionObject({
         hoTen: profile.hoTen,
         doTuoi: profile.doTuoi,
@@ -222,7 +224,11 @@ function buildFashionSheetData(form) {
         hoTenNguoiTraLoi: getTypedValue(form, "fashion_full_name"),
         nhomTuoi: getChoiceValue(form, "fashion_age_group"),
         gioiTinhNguoiTraLoi: getChoiceValue(form, "fashion_gender"),
-        diaChiNguoiTraLoi: getTypedValue(form, "fashion_address"),
+        diaChiNguoiTraLoi: [xaPhuongNguoiTraLoi, tinhThanhNguoiTraLoi].filter(Boolean).join(", "),
+        tinhThanhNguoiTraLoi,
+        maTinhThanhNguoiTraLoi: getTypedValue(form, "fashion_province_code"),
+        xaPhuongNguoiTraLoi,
+        maXaPhuongNguoiTraLoi: getTypedValue(form, "fashion_ward_code"),
         mucDoQuanTamThoiTrang: getChoiceValue(form, "fashion_fashion_interest"),
         thuNhapHangThang: getChoiceValue(form, "fashion_monthly_income"),
         xepHangYeuToMuaHang: {
