@@ -1,9 +1,9 @@
-// Điền các giá trị này khi triển khai hệ thống lưu dữ liệu.
+// Google Sheet chưa được cấu hình cho bản triển khai này.
 const scriptURL = "";
 const SHEET_LOGGER_SECRET = "";
 const ENABLE_GOOGLE_SHEET_SYNC = false;
-const DATABASE_URL = "";
-const DATABASE_ANON_KEY = "";
+const DATABASE_URL = "https://ovjbhwwurshegbvbfyac.supabase.co";
+const DATABASE_ANON_KEY = "sb_publishable_9W7H1p7pH6FbQjAwaScPaQ_kcOZpz6K";
 const DATABASE_TABLE = "survey_submissions";
 const SHEET_SOURCE_URL = "https://docs.google.com/spreadsheets/d/14Zo1oQT0--dw7L5OJ46OGVivvcxqFViqJzTMhkrrXXg/edit?usp=sharing";
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/14Zo1oQT0--dw7L5OJ46OGVivvcxqFViqJzTMhkrrXXg/export?format=csv";
