@@ -470,8 +470,9 @@ async function submitSurveyToDatabase(surveyCode, data, result) {
 
     if (!normalizedSurveyCode) return { configured: false, success: false };
 
-    let sheetSaved = !ENABLE_GOOGLE_SHEET_SYNC;
-    if (ENABLE_GOOGLE_SHEET_SYNC) {
+    const sheetConfigured = ENABLE_GOOGLE_SHEET_SYNC && Boolean(scriptURL) && Boolean(SHEET_LOGGER_SECRET);
+    let sheetSaved = false;
+    if (sheetConfigured) {
         try {
             await postSubmissionToGoogleSheet(sheetPayload);
             removeQueuedSheetSubmission(submissionId);
@@ -483,6 +484,12 @@ async function submitSurveyToDatabase(surveyCode, data, result) {
     }
 
     if (!DATABASE_URL || !DATABASE_ANON_KEY) {
+        if (sheetSaved) {
+            return { configured: true, success: true, target: "sheet", sheetSaved: true };
+        }
+        if (sheetConfigured) {
+            return { configured: true, success: false, queued: true, target: "sheet" };
+        }
         queueSubmission(payload);
         return { configured: false, success: false, queued: true, target: "database" };
     }
@@ -495,7 +502,7 @@ async function submitSurveyToDatabase(surveyCode, data, result) {
     try {
         await postSubmissionPayload(payload);
         removeQueuedSubmission(payload.id);
-        return { configured: true, success: sheetSaved || true, sheetSaved };
+        return { configured: true, success: true, sheetSaved };
     } catch (error) {
         console.error("Database submit failed:", error);
         queueSubmission(payload);

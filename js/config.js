@@ -1,9 +1,9 @@
-// Google Sheet chưa được cấu hình cho bản triển khai này.
-const scriptURL = "";
-const SHEET_LOGGER_SECRET = "";
-const ENABLE_GOOGLE_SHEET_SYNC = false;
-const DATABASE_URL = "https://ovjbhwwurshegbvbfyac.supabase.co";
-const DATABASE_ANON_KEY = "sb_publishable_9W7H1p7pH6FbQjAwaScPaQ_kcOZpz6K";
+// Google Sheet là nơi lưu tạm thời của bản triển khai này.
+const scriptURL = "https://script.google.com/macros/s/AKfycbyHSXgSIO9pYBIQubS-_65CmrUzKIzJRBKpjRci1M3mLrbw0FZkbBJmcmonZ8bynAkMnQ/exec";
+const SHEET_LOGGER_SECRET = "khaosat_2026";
+const ENABLE_GOOGLE_SHEET_SYNC = true;
+const DATABASE_URL = "";
+const DATABASE_ANON_KEY = "";
 const DATABASE_TABLE = "survey_submissions";
 const SHEET_SOURCE_URL = "https://docs.google.com/spreadsheets/d/14Zo1oQT0--dw7L5OJ46OGVivvcxqFViqJzTMhkrrXXg/edit?usp=sharing";
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/14Zo1oQT0--dw7L5OJ46OGVivvcxqFViqJzTMhkrrXXg/export?format=csv";
