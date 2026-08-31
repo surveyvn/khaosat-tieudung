@@ -1,5 +1,5 @@
 // Google Sheet là nơi lưu tạm thời của bản triển khai này.
-const scriptURL = "https://script.google.com/macros/s/AKfycbyHSXgSIO9pYBIQubS-_65CmrUzKIzJRBKpjRci1M3mLrbw0FZkbBJmcmonZ8bynAkMnQ/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbz_hoPlWBwBe0mkVfbAEs9S63na0eXuGWyWEbPAinwvtFGtjdINFNMUKAOL8o4ljtAI8Q/exec";
 const SHEET_LOGGER_SECRET = "khaosat_2026";
 const ENABLE_GOOGLE_SHEET_SYNC = true;
 const DATABASE_URL = "";
