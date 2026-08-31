@@ -354,11 +354,22 @@ function removeQueuedSheetSubmission(submissionId) {
 
 async function postSubmissionToGoogleSheet(payload) {
     if (!scriptURL) throw new Error("Google Sheet endpoint is not configured");
-    const response = await fetch(scriptURL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload)
-    });
+    const controller = typeof AbortController === "undefined" ? null : new AbortController();
+    const timeoutId = controller ? setTimeout(() => controller.abort(), 15000) : null;
+    let response;
+    try {
+        response = await fetch(scriptURL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload),
+            signal: controller?.signal
+        });
+    } catch (error) {
+        if (error?.name === "AbortError") throw new Error("Google Sheet phản hồi quá lâu");
+        throw error;
+    } finally {
+        if (timeoutId) clearTimeout(timeoutId);
+    }
     if (!response.ok) throw new Error(`Google Sheet request failed: ${response.status}`);
     const responseData = await response.json();
     if (!responseData?.ok) throw new Error(responseData?.error || "Google Sheet rejected submission");
